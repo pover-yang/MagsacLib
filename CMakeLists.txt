@@ -10,6 +10,7 @@ option(USE_OPENMP "Use OPENMP" ON)
 option(CREATE_SAMPLE_PROJECT "Create the Sample Project" ON)
 
 SET (CMAKE_BUILD_TYPE "DEBUG")
+set(CMAKE_OSX_ARCHITECTURES "arm64")
 
 IF(CMAKE_COMPILER_IS_GNUCXX)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-strict-aliasing")
@@ -78,6 +79,21 @@ set(EIGEN_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 # ==============================================================================
 # Find OpenMP
 # ==============================================================================
+if(APPLE)
+    set(OpenMP_CXX "${CMAKE_CXX_COMPILER}")
+    set(OpenMP_CXX_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument")
+    set(OpenMP_CXX_LIB_NAMES "libomp" "libgomp" "libiomp5")
+    set(OpenMP_libomp_LIBRARY ${OpenMP_CXX_LIB_NAMES})
+    set(OpenMP_libgomp_LIBRARY ${OpenMP_CXX_LIB_NAMES})
+    set(OpenMP_libiomp5_LIBRARY ${OpenMP_CXX_LIB_NAMES})
+    set(OpenMP_C "${CMAKE_C_COMPILER}")
+    set(OpenMP_C_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument")
+    set(OpenMP_C_LIB_NAMES "libomp" "libgomp" "libiomp5")
+    set(OpenMP_libomp_LIBRARY ${OpenMP_C_LIB_NAMES})
+    set(OpenMP_libgomp_LIBRARY ${OpenMP_C_LIB_NAMES})
+    set(OpenMP_libiomp5_LIBRARY ${OpenMP_C_LIB_NAMES})
+endif()
+
 find_package(OpenMP)
 if (USE_OPENMP)
     if(NOT OPENMP_FOUND)
@@ -123,7 +139,7 @@ target_link_libraries(
         ${PROJECT_NAME}
         ${OpenCV_LIBS}
         Eigen3::Eigen
-        glog
+        glog::glog
         gflags)
 
 add_executable(SampleProject cpp_example.cpp)
@@ -131,6 +147,6 @@ target_link_libraries(SampleProject PUBLIC
         ${PROJECT_NAME}
         ${OpenCV_LIBS}
         Eigen3::Eigen
-        glog
+        glog::glog
         gflags
         )
