@@ -94,8 +94,7 @@ namespace estimator
         // Calculating the residual which is used for the MAGSAC score calculation.
         // Since symmetric epipolar distance is usually more robust than Sampson-error.
         // we are using it for the score calculation.
-        inline double residualForScoring(const cv::Mat& point_,
-                                         const gcransac::Model& model_) const
+        inline double residualForScoring(const cv::Mat& point_, const gcransac::Model& model_) const
         {
             return std::sqrt(squaredSymmetricEpipolarDistance(point_, model_.descriptor));
         }
