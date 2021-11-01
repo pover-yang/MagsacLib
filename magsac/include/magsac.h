@@ -75,61 +75,12 @@ public:
 		return interrupting_threshold;
 	}
 
-	// Setting the flag determining if post-processing is needed
-	void applyPostProcessing(bool value_)
-	{
-		apply_post_processing = value_;
-	}
 
 	// A function to set the maximum number of iterations
 	void setIterationLimit(size_t iteration_limit_)
 	{
 		iteration_limit = iteration_limit_;
 	}
-
-	// A function to set the minimum number of iterations
-	void setMinimumIterationNumber(size_t mininum_iteration_number_)
-	{
-		mininum_iteration_number = mininum_iteration_number_;
-	}
-
-	// A function to set the number of cores used in the original MAGSAC algorithm.
-	// In MAGSAC++, it is not used. Note that when multiple MAGSACs run in parallel,
-	// it is beneficial to keep the core number one for each independent MAGSAC.
-	// Otherwise, the threads will act weirdly.
-	void setCoreNumber(size_t core_number_)
-	{
-		if (magsac_version == MAGSAC_PLUS_PLUS)
-			LOG(ERROR) << "Setting the core number for MAGSAC++ is deprecated.";
-		core_number = core_number_;
-	}
-
-	// Setting the number of partitions used in the original MAGSAC algorithm
-	// to speed up the procedure. In MAGSAC++, this parameter is not used.
-	void setPartitionNumber(size_t partition_number_)
-	{
-		if (magsac_version == MAGSAC_PLUS_PLUS)
-			LOG(ERROR) << "Setting the partition number for MAGSAC++ is deprecated.";
-		partition_number = partition_number_;
-	}
-
-	// A function to set a desired minimum frames-per-second (FPS) value.
-	void setFPS(int fps_)
-	{
-		desired_fps = fps_; // The required FPS.
-		// The time limit which the FPS implies
-		time_limit = fps_ <= 0 ?
-			std::numeric_limits<double>::max() :
-			1.0 / fps_;
-	}
-
-	// The post-processing algorithm applying sigma-consensus to the input model once.
-	bool postProcessing(
-		const cv::Mat &points, // All data points
-		const gcransac::Model &so_far_the_best_model, // The input model to be improved
-		gcransac::Model &output_model, // The improved model parameters
-		ModelScore &output_score, // The score of the improved model
-		const ModelEstimator &estimator); // The model estimator
 
 	// The function determining the quality/score of a model using the original MAGSAC
 	// criterion. Note that this function is significantly slower than the quality
