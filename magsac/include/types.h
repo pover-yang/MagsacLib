@@ -36,7 +36,6 @@
 #include <vector>
 #include <numeric>
 
-#include "estimators/fundamental_estimator.h"
 #include "estimators/homography_estimator.h"
 #include "estimators/radial_homography_estimator.h"
 #include "estimators/essential_estimator.h"
@@ -57,50 +56,48 @@
 #include "estimators/solver_radial_homography_5pc.h"
 #include "estimators/solver_radial_homography_6pc.h"
 
-namespace gcransac
-{
-	namespace utils
-	{
-		// The default estimator for fundamental matrix fitting
-		typedef estimator::FundamentalMatrixEstimator<estimator::solver::FundamentalMatrixSevenPointSolver, // The solver used for fitting a model to a minimal sample
-			estimator::solver::FundamentalMatrixEightPointSolver> // The solver used for fitting a model to a non-minimal sample
-			DefaultFundamentalMatrixEstimator;
+namespace gcransac {
+    namespace utils {
+        // The default estimator for fundamental matrix fitting
+        typedef estimator::FundamentalMatrixEstimator<estimator::solver::FundamentalMatrixSevenPointSolver, // The solver used for fitting a model to a minimal sample
+                estimator::solver::FundamentalMatrixEightPointSolver> // The solver used for fitting a model to a non-minimal sample
+        DefaultFundamentalMatrixEstimator;
 
-		// The default estimator for homography fitting
-		typedef estimator::RobustHomographyEstimator<estimator::solver::HomographyFourPointSolver, // The solver used for fitting a model to a minimal sample
-			estimator::solver::HomographyFourPointSolver> // The solver used for fitting a model to a non-minimal sample
-			DefaultHomographyEstimator;
+        // The default estimator for homography fitting
+        typedef estimator::RobustHomographyEstimator<estimator::solver::HomographyFourPointSolver, // The solver used for fitting a model to a minimal sample
+                estimator::solver::HomographyFourPointSolver> // The solver used for fitting a model to a non-minimal sample
+        DefaultHomographyEstimator;
 
-		// The default estimator for essential matrix fitting
-		typedef estimator::EssentialMatrixEstimator<estimator::solver::EssentialMatrixFivePointSteweniusSolver, // The solver used for fitting a model to a minimal sample
-			estimator::solver::EssentialMatrixBundleAdjustmentSolver> // The solver used for fitting a model to a non-minimal sample
-			DefaultEssentialMatrixEstimator;
+        // The default estimator for essential matrix fitting
+        typedef estimator::EssentialMatrixEstimator<estimator::solver::EssentialMatrixFivePointSteweniusSolver, // The solver used for fitting a model to a minimal sample
+                estimator::solver::EssentialMatrixBundleAdjustmentSolver> // The solver used for fitting a model to a non-minimal sample
+        DefaultEssentialMatrixEstimator;
 
-		// The default estimator for PnP fitting
-		typedef estimator::PerspectiveNPointEstimator<estimator::solver::P3PSolver, // The solver used for fitting a model to a minimal sample
-			estimator::solver::EPnPLM> // The solver used for fitting a model to a non-minimal sample
-			DefaultPnPEstimator;
+        // The default estimator for PnP fitting
+        typedef estimator::PerspectiveNPointEstimator<estimator::solver::P3PSolver, // The solver used for fitting a model to a minimal sample
+                estimator::solver::EPnPLM> // The solver used for fitting a model to a non-minimal sample
+        DefaultPnPEstimator;
 
-		// The default estimator for PnP fitting
-		typedef estimator::RigidTransformationEstimator<estimator::solver::RigidTransformationSVDBasedSolver, // The solver used for fitting a model to a minimal sample
-			estimator::solver::RigidTransformationSVDBasedSolver> // The solver used for fitting a model to a non-minimal sample
-			DefaultRigidTransformationEstimator;
+        // The default estimator for PnP fitting
+        typedef estimator::RigidTransformationEstimator<estimator::solver::RigidTransformationSVDBasedSolver, // The solver used for fitting a model to a minimal sample
+                estimator::solver::RigidTransformationSVDBasedSolver> // The solver used for fitting a model to a non-minimal sample
+        DefaultRigidTransformationEstimator;
 
-		// The default estimator for 2D line fitting
-		typedef estimator::LinearModelEstimator<estimator::solver::LinearModelSolver<2>, // The solver used for fitting a model to a minimal sample
-			estimator::solver::LinearModelSolver<2>,  // The solver used for fitting a model to a non-minimal sample
-			2> // The dimensionality of the problem
-			Default2DLineEstimator;
+        // The default estimator for 2D line fitting
+        typedef estimator::LinearModelEstimator<estimator::solver::LinearModelSolver<2>, // The solver used for fitting a model to a minimal sample
+                estimator::solver::LinearModelSolver<2>,  // The solver used for fitting a model to a non-minimal sample
+                2> // The dimensionality of the problem
+        Default2DLineEstimator;
 
-		// The default estimator for 3D plane fitting
-		typedef estimator::LinearModelEstimator<estimator::solver::LinearModelSolver<3>, // The solver used for fitting a model to a minimal sample
-			estimator::solver::LinearModelSolver<3>,  // The solver used for fitting a model to a non-minimal sample
-			3> // The dimensionality of the problem
-			Default3DPlaneEstimator;
+        // The default estimator for 3D plane fitting
+        typedef estimator::LinearModelEstimator<estimator::solver::LinearModelSolver<3>, // The solver used for fitting a model to a minimal sample
+                estimator::solver::LinearModelSolver<3>,  // The solver used for fitting a model to a non-minimal sample
+                3> // The dimensionality of the problem
+        Default3DPlaneEstimator;
 
-		// The default estimator for radial distortion homography fitting
-		typedef estimator::RadialHomographyEstimator<estimator::solver::RadialHomography5PC, // The solver used for fitting a model to a minimal sample
-			estimator::solver::RadialHomography6PC>  // The solver used for fitting a model to a non-minimal sample
-			DefaultRadialHomographyEstimator;
-	}
+        // The default estimator for radial distortion homography fitting
+        typedef estimator::RadialHomographyEstimator<estimator::solver::RadialHomography5PC, // The solver used for fitting a model to a minimal sample
+                estimator::solver::RadialHomography6PC>  // The solver used for fitting a model to a non-minimal sample
+        DefaultRadialHomographyEstimator;
+    }
 }
