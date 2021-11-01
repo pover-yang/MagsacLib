@@ -132,7 +132,7 @@ void testEssentialMatrixFitting(
 	const size_t N = points.rows; // The number of points in the scene
 
 	// The robust homography estimator class containing the function for the fitting and residual calculation
-	magsac::utils::DefaultEssentialMatrixEstimator estimator(
+	utils::DefaultEssentialMatrixEstimator estimator(
 		intrinsics_source,
 		intrinsics_destination,
 		0.0); 
@@ -151,10 +151,10 @@ void testEssentialMatrixFitting(
 			static_cast<double>(image2.rows) },  // The height of the destination image
 		0.5); // The length (i.e., 0.5 * <point number> iterations) of fully blending to global sampling 
 
-	MAGSAC<cv::Mat, magsac::utils::DefaultEssentialMatrixEstimator> magsac
+	MAGSAC<cv::Mat, utils::DefaultEssentialMatrixEstimator> magsac
 		(use_magsac_plus_plus_ ?
-			MAGSAC<cv::Mat, magsac::utils::DefaultEssentialMatrixEstimator>::MAGSAC_PLUS_PLUS :
-			MAGSAC<cv::Mat, magsac::utils::DefaultEssentialMatrixEstimator>::MAGSAC_ORIGINAL);
+			MAGSAC<cv::Mat, utils::DefaultEssentialMatrixEstimator>::MAGSAC_PLUS_PLUS :
+			MAGSAC<cv::Mat, utils::DefaultEssentialMatrixEstimator>::MAGSAC_ORIGINAL);
 	magsac.setMaximumThreshold(normalized_maximum_threshold); // The maximum noise scale sigma allowed
 	magsac.setReferenceThreshold(magsac.getReferenceThreshold() * normalizing_multiplier); // The reference threshold inside MAGSAC++ should also be normalized.
 	magsac.setIterationLimit(1e4); // Iteration limit to interrupt the cases when the algorithm run too long.
@@ -162,14 +162,14 @@ void testEssentialMatrixFitting(
 	int iteration_number = 0; // Number of iterations required
 	ModelScore score; // The model score
 
-	std::chrono::time_point<std::chrono::system_clock> end,
-		start = std::chrono::system_clock::now();
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
 	magsac.run(normalized_points, // The data points
 		ransac_confidence_, // The required confidence in the results
 		estimator, // The used estimator
 		main_sampler, // The sampler used for selecting minimal samples in each iteration
-		model, // The estimated model
-		iteration_number, // The number of iterations
+		model, // The estimated model parameters
+		iteration_number, // The number of iterations done
 		score); // The score of the estimated model
 	end = std::chrono::system_clock::now();
 

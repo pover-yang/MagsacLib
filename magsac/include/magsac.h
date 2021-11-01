@@ -28,11 +28,8 @@ public:
 		MAGSAC_PLUS_PLUS };
 
 	MAGSAC(const Version magsac_version_ = Version::MAGSAC_PLUS_PLUS) :
-		time_limit(std::numeric_limits<double>::max()), //
-		desired_fps(-1),
 		iteration_limit(std::numeric_limits<size_t>::max()),
 		maximum_threshold(10.0),
-		apply_post_processing(true),
 		mininum_iteration_number(50),
 		partition_number(5),
 		core_number(1),
@@ -75,7 +72,6 @@ public:
 		return interrupting_threshold;
 	}
 
-
 	// A function to set the maximum number of iterations
 	void setIterationLimit(size_t iteration_limit_)
 	{
@@ -108,9 +104,6 @@ protected:
 	size_t mininum_iteration_number; // Minimum number of iteration before terminating
 	double maximum_threshold; // The maximum sigma value
 	size_t core_number; // Number of core used in sigma-consensus
-	double time_limit; // A time limit after the algorithm is interrupted
-	int desired_fps; // The desired FPS (TODO: not tested with MAGSAC)
-	bool apply_post_processing; // Decides if the post-processing step should be applied
 	int point_number; // The current point number
 	int last_iteration_number; // The iteration number implied by the last run of sigma-consensus
 	double log_confidence; // The logarithm of the required confidence
@@ -145,8 +138,6 @@ bool MAGSAC<DatumType, ModelEstimator>::run(
 	ModelScore &model_score_)
 {
 	// Initialize variables
-	std::chrono::time_point<std::chrono::system_clock> start, end; // Variables for time measuring: start and end times
-	std::chrono::duration<double> elapsed_seconds; // Variables for time measuring: elapsed time
 	log_confidence = log(1.0 - confidence_); // The logarithm of 1 - confidence
 	point_number = points_.rows; // Number of points
 	const size_t sample_size = estimator_.sampleSize(); // The sample size required for the estimation
@@ -170,10 +161,6 @@ bool MAGSAC<DatumType, ModelEstimator>::run(
 		return false;
 	}
 
-	// Set the start time variable if there is some time limit set
-	if (desired_fps > -1)
-		start = std::chrono::system_clock::now();
-
 	constexpr size_t max_unsuccessful_model_generations = 50;
 
 	// Main MAGSAC iteration
@@ -190,21 +177,22 @@ bool MAGSAC<DatumType, ModelEstimator>::run(
 		while (++unsuccessful_model_generations < max_unsuccessful_model_generations)
 		{
 			// Get a minimal sample randomly
-			if (!sampler_.sample(pool, // The index pool from which the minimal sample can be selected
-				minimal_sample.get(), // The minimal sample
-				sample_size)) // The size of a minimal sample
+            // pool: The index pool from which the minimal sample can be selected;
+            // minimal_sample.get(): The minimal sample
+            // sample_size: The size of a minimal sample
+			if (!sampler_.sample(pool, minimal_sample.get(), sample_size))
 				continue;
 
-			// Check if the selected sample is valid before estimating the model
-			// parameters which usually takes more time.
-			if (!estimator_.isValidSample(points_, // All points
-				minimal_sample.get())) // The current sample
+			// Check if the selected sample is valid before estimating the model which usually takes more time.
+            // points_:  All points; minimal_sample.get(): The current sample
+			if (!estimator_.isValidSample(points_, minimal_sample.get()))
 				continue;
 
 			// Estimate the model from the minimal sample
- 			if (estimator_.estimateModel(points_, // All data points
-				minimal_sample.get(), // The selected minimal sample
-				&models)) // The estimated models
+            // points_: All data points
+            // minimal_sample.get(): The selected minimal sample
+            // &models: The estimated models
+ 			if (estimator_.estimateModel(points_, minimal_sample.get(), &models)) // The estimated models
 				break;
 		}
 
@@ -249,23 +237,6 @@ bool MAGSAC<DatumType, ModelEstimator>::run(
 				max_iteration = MIN(max_iteration, last_iteration_number); // Update the max iteration number, but do not allow to increase
 			}
 		}
-
-		// Update the time parameters if a time limit is set
-		if (desired_fps > -1)
-		{
-			end = std::chrono::system_clock::now();
-			elapsed_seconds = end - start;
-
-			// Interrupt if the time limit is exceeded
-			if (elapsed_seconds.count() > time_limit)
-				break;
-		}
-	}
-
-	// Apply sigma-consensus as a post processing step if needed and the estimated model is valid
-	if (apply_post_processing)
-	{
-		// TODO
 	}
 
 	obtained_model_ = so_far_the_best_model;
