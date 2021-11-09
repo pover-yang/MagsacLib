@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project (MagsacLib)
+project(MagsacLib)
 
 set(CMAKE_CXX_STANDARD 14)
 
@@ -9,14 +9,14 @@ option(USE_OPENMP "Use OPENMP" ON)
 # indicate if the sample project should be generated
 option(CREATE_SAMPLE_PROJECT "Create the Sample Project" ON)
 
-SET (CMAKE_BUILD_TYPE "DEBUG")
+SET(CMAKE_BUILD_TYPE "DEBUG")
 
-IF(CMAKE_COMPILER_IS_GNUCXX)
+IF (CMAKE_COMPILER_IS_GNUCXX)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-strict-aliasing")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra -Wno-write-strings")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated -ansi")
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -ftree-vectorize -funroll-loops")
-ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+ENDIF (CMAKE_COMPILER_IS_GNUCXX)
 
 # ==============================================================================
 # Check C++17 support
@@ -39,26 +39,26 @@ endif (OPENCV_FOUND)
 # Find GFlags
 # ==============================================================================
 find_package(gflags REQUIRED)
-if(DEFINED gflags_VERSION_STRING OR DEFINED GFLAGS_VERSION_STRING)
+if (DEFINED gflags_VERSION_STRING OR DEFINED GFLAGS_VERSION_STRING)
     # different cmake variable with lower or upper case exist
     set(GFLAGS_INCLUDE_DIR ${GFLAGS_INCLUDE_DIR})
     set(GFLAGS_LIBRARIES ${GFLAGS_LIBRARIES})
-    message( "Found Gflags ${GFLAGS_VERSION_STRING}" )
-    message( STATUS "> GFLAGS_INCLUDE_DIR:   ${GFLAGS_INCLUDE_DIR}" )
-    message( STATUS "> GFLAGS_LIBRARIES:   ${GFLAGS_LIBRARIES}" )
-endif()
+    message("Found Gflags ${GFLAGS_VERSION_STRING}")
+    message(STATUS "> GFLAGS_INCLUDE_DIR:   ${GFLAGS_INCLUDE_DIR}")
+    message(STATUS "> GFLAGS_LIBRARIES:   ${GFLAGS_LIBRARIES}")
+endif ()
 
 # ==============================================================================
 # Find GLOG
 # ==============================================================================
 find_package(Glog REQUIRED)
-if(NOT Glog_FOUND)
+if (NOT Glog_FOUND)
     message(FATAL_ERROR "Glog not found.")
-else()
+else ()
     message("Glog library found.")
-endif()
+endif ()
 
-if(IS_MSVC)
+if (IS_MSVC)
     # Some fixes for the Glog library.
     add_definitions("-DGLOG_NO_ABBREVIATED_SEVERITIES")
     add_definitions("-DGL_GLEXT_PROTOTYPES")
@@ -66,7 +66,7 @@ if(IS_MSVC)
     # Enable object level parallel builds in Visual Studio.
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MP")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-endif()
+endif ()
 
 
 # ==============================================================================
@@ -78,7 +78,7 @@ set(EIGEN_INCLUDE_DIRS ${EIGEN3_INCLUDE_DIR})
 # ==============================================================================
 # Find OpenMP
 # ==============================================================================
-if(APPLE)
+if (APPLE)
     set(OpenMP_CXX "${CMAKE_CXX_COMPILER}")
     set(OpenMP_CXX_FLAGS "-fopenmp=libomp -Wno-unused-command-line-argument")
     set(OpenMP_CXX_LIB_NAMES "libomp" "libgomp" "libiomp5")
@@ -91,13 +91,13 @@ if(APPLE)
     set(OpenMP_libomp_LIBRARY ${OpenMP_C_LIB_NAMES})
     set(OpenMP_libgomp_LIBRARY ${OpenMP_C_LIB_NAMES})
     set(OpenMP_libiomp5_LIBRARY ${OpenMP_C_LIB_NAMES})
-endif()
+endif ()
 
 find_package(OpenMP)
 if (USE_OPENMP)
-    if(NOT OPENMP_FOUND)
+    if (NOT OPENMP_FOUND)
         message(FATAL_ERROR "OPENMP not found.")
-    endif()
+    endif ()
     add_definitions(-DUSE_OPENMP)
     set(TRGT_LNK_LBS_ADDITIONAL OpenMP::OpenMP_CXX)
 endif (USE_OPENMP)
@@ -107,7 +107,7 @@ endif (USE_OPENMP)
 # ==============================================================================
 SET(SOURCE_DIR "magsac")
 
-include_directories (
+include_directories(
         ${PROJECT_SOURCE_DIR}/graph-cut-ransac/src/pygcransac/include
 )
 
@@ -117,7 +117,7 @@ include_directories (
 # ==============================================================================
 
 # Tell cmake that headers are in alse in source_dir
-include_directories (${SOURCE_DIR}/include)
+include_directories(${SOURCE_DIR}/include)
 
 # Set header files for the library
 file(GLOB_RECURSE HDRS_MAGSAC
@@ -141,7 +141,8 @@ target_link_libraries(
         glog::glog
         gflags)
 
-add_executable(SampleProject cpp_example.cpp)
+#add_executable(SampleProject cpp_example.cpp)
+add_executable(SampleProject new_example.cpp utils.cpp utils.h)
 target_link_libraries(SampleProject PUBLIC
         ${PROJECT_NAME}
         ${OpenCV_LIBS}

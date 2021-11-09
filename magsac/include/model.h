@@ -38,108 +38,87 @@
 #include <Eigen/Eigen>
 #include "estimators/estimator.h"
 
-namespace gcransac
-{
-	class Model
-	{
-	public:
-		Eigen::MatrixXd descriptor; // The descriptor of the current model
 
-		Model(const Eigen::MatrixXd &descriptor_) :
-			descriptor(descriptor_)
-		{
+class Model {
+public:
+    Eigen::MatrixXd descriptor; // The descriptor of the current model
 
-		}
+    Model(const Eigen::MatrixXd &descriptor_) :
+            descriptor(descriptor_) {
 
-		Model()
-		{
+    }
 
-		}
-	};
+    Model() {
 
-	class RigidTransformation : public Model
-	{
-	public:
-		RigidTransformation() :
-			Model(Eigen::MatrixXd(4, 4))
-		{}
-		RigidTransformation(const RigidTransformation& other)
-		{
-			descriptor = other.descriptor;
-		}
-	};
+    }
+};
 
-	class Line2D : public Model
-	{
-	public:
-		Line2D() :
-			Model(Eigen::MatrixXd(3, 1))
-		{}
-		Line2D(const Line2D& other)
-		{
-			descriptor = other.descriptor;
-		}
-	};
+class RigidTransformation : public Model {
+public:
+    RigidTransformation() :
+            Model(Eigen::MatrixXd(4, 4)) {}
 
-	class FundamentalMatrix : public Model
-	{
-	public:
-		FundamentalMatrix() :
-			Model(Eigen::MatrixXd(3, 3))
-		{}
-		FundamentalMatrix(const FundamentalMatrix& other)
-		{
-			descriptor = other.descriptor;
-		}
-	};
+    RigidTransformation(const RigidTransformation &other) {
+        descriptor = other.descriptor;
+    }
+};
 
-	class EssentialMatrix : public Model
-	{
-	public:
-		EssentialMatrix() :
-			Model(Eigen::MatrixXd(3, 3))
-		{}
-		EssentialMatrix(const EssentialMatrix& other)
-		{
-			descriptor = other.descriptor;
-		}
-	};
+class Line2D : public Model {
+public:
+    Line2D() :
+            Model(Eigen::MatrixXd(3, 1)) {}
 
-	class Pose6D : public Model
-	{
-	public:
-		Pose6D() :
-			Model(Eigen::MatrixXd(3, 4))
-		{}
-		Pose6D(const Pose6D& other_)
-		{
-			descriptor = other_.descriptor;
-		}
-	};
+    Line2D(const Line2D &other) {
+        descriptor = other.descriptor;
+    }
+};
 
-	class Homography : public Model
-	{
-	public:
-		Homography() :
-			Model(Eigen::MatrixXd(3, 3))
-		{}
+class FundamentalMatrix : public Model {
+public:
+    FundamentalMatrix() :
+            Model(Eigen::MatrixXd(3, 3)) {}
 
-		Homography(const Homography& other)
-		{
-			descriptor = other.descriptor;
-		}
-	};
+    FundamentalMatrix(const FundamentalMatrix &other) {
+        descriptor = other.descriptor;
+    }
+};
 
-	class RadialHomography : public Model
-	{
-	public:
-		RadialHomography() :
-			Model(Eigen::MatrixXd(3, 7))
-		{}
+class EssentialMatrix : public Model {
+public:
+    EssentialMatrix() :
+            Model(Eigen::MatrixXd(3, 3)) {}
 
-		RadialHomography(const RadialHomography& other)
-		{
-			descriptor = other.descriptor;
-		}
-	};
-}
+    EssentialMatrix(const EssentialMatrix &other) {
+        descriptor = other.descriptor;
+    }
+};
+
+class Pose6D : public Model {
+public:
+    Pose6D() :
+            Model(Eigen::MatrixXd(3, 4)) {}
+
+    Pose6D(const Pose6D &other_) {
+        descriptor = other_.descriptor;
+    }
+};
+
+class Homography : public Model {
+public:
+    Homography() :
+            Model(Eigen::MatrixXd(3, 3)) {}
+
+    Homography(const Homography &other) {
+        descriptor = other.descriptor;
+    }
+};
+
+class RadialHomography : public Model {
+public:
+    RadialHomography() :
+            Model(Eigen::MatrixXd(3, 7)) {}
+
+    RadialHomography(const RadialHomography &other) {
+        descriptor = other.descriptor;
+    }
+};

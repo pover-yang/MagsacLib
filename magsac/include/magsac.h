@@ -3,6 +3,7 @@
 #include <limits>
 #include <chrono>
 #include <memory>
+#include <utility>
 #include "model.h"
 #include "model_score.h"
 #include "samplers/sampler.h"
@@ -17,17 +18,11 @@
 #include <gflags/gflags.h>
 #include <glog/logging.h>
 
-template<class DatumType, class ModelEstimator>
+template<class ModelEstimator>
 class MAGSAC {
 public:
-    enum Version {
-        // The original version of MAGSAC. It works well, however, can be quite slow in many cases.
-        MAGSAC_ORIGINAL,
-        // The recently proposed MAGSAC++ algorithm which keeps the accuracy of the original MAGSAC but is often orders of magnitude faster.
-        MAGSAC_PLUS_PLUS
-    };
 
-    MAGSAC(const Version magsac_version_ = Version::MAGSAC_PLUS_PLUS) :
+    MAGSAC(std::string magsac_version_ = "MAGSAC_PLUS_PLUS") :
             iteration_limit(std::numeric_limits<size_t>::max()),
             maximum_threshold(10.0),
             mininum_iteration_number(50),
@@ -38,8 +33,7 @@ public:
             last_iteration_number(0),
             log_confidence(0),
             point_number(0),
-            magsac_version(magsac_version_) {
-    }
+            magsac_version(std::move(magsac_version_)) {}
 
     ~MAGSAC() {}
 
@@ -48,8 +42,8 @@ public:
             const cv::Mat &points_, // The input data points
             const double confidence_, // The required confidence in the results
             ModelEstimator &estimator_, // The model estimator
-            gcransac::sampler::Sampler<cv::Mat, size_t> &sampler_, // The sampler used
-            gcransac::Model &obtained_model_, // The estimated model parameters
+            sampler::Sampler<cv::Mat, size_t> &sampler_, // The sampler used
+            Model &obtained_model_, // The estimated model parameters
             int &iteration_number_, // The number of iterations done
             ModelScore &model_score_); // The score of the estimated model
 
@@ -73,28 +67,26 @@ public:
         iteration_limit = iteration_limit_;
     }
 
-    // The function determining the quality/score of a model using the original MAGSAC
-    // criterion. Note that this function is significantly slower than the quality
-    // function of MAGSAC++.
+    // The function determining the quality/score of a model using the original MAGSAC criterion.
+    // Note that this function is significantly slower than the quality function of MAGSAC++.
     void getModelQuality(
             const cv::Mat &points_, // All data points
-            const gcransac::Model &model_, // The input model
+            const Model &model_, // The input model
             const ModelEstimator &estimator_, // The model estimator
             double &marginalized_iteration_number_, // The required number of iterations marginalized over the noise scale
             double &score_); // The score/quality of the model
 
-    // The function determining the quality/score of a
-    // model using the MAGSAC++ criterion.
+    // The function determining the quality/score of a model using the MAGSAC++ criterion.
     void getModelQualityPlusPlus(
             const cv::Mat &points_, // All data points
-            const gcransac::Model &model_, // The model parameter
+            const Model &model_, // The model parameter
             const ModelEstimator &estimator_, // The model estimator class
             double &score_, // The score to be calculated
             const double &previous_best_score_); // The score of the previous so-far-the-best model
 
     size_t number_of_irwls_iters;
 protected:
-    Version magsac_version; // The version of MAGSAC used
+    std::string magsac_version; // The version of MAGSAC used
     size_t iteration_limit; // Maximum number of iterations allowed
     size_t mininum_iteration_number; // Minimum number of iteration before terminating
     double maximum_threshold; // The maximum sigma value
@@ -107,28 +99,28 @@ protected:
 
     bool sigmaConsensus(
             const cv::Mat &points_,
-            const gcransac::Model &model_,
-            gcransac::Model &refined_model_,
+            const Model &model_,
+            Model &refined_model_,
             ModelScore &score_,
             const ModelEstimator &estimator_,
             const ModelScore &best_score_);
 
     bool sigmaConsensusPlusPlus(
             const cv::Mat &points_,
-            const gcransac::Model &model_,
-            gcransac::Model &refined_model_,
+            const Model &model_,
+            Model &refined_model_,
             ModelScore &score_,
             const ModelEstimator &estimator_,
             const ModelScore &best_score_);
 };
 
-template<class DatumType, class ModelEstimator>
-bool MAGSAC<DatumType, ModelEstimator>::run(
+template<class ModelEstimator>
+bool MAGSAC<ModelEstimator>::run(
         const cv::Mat &points_,
         const double confidence_,
         ModelEstimator &estimator_,
-        gcransac::sampler::Sampler<cv::Mat, size_t> &sampler_,
-        gcransac::Model &obtained_model_,
+        sampler::Sampler<cv::Mat, size_t> &sampler_,
+        Model &obtained_model_,
         int &iteration_number_,
         ModelScore &model_score_) {
     // Initialize variables
@@ -136,8 +128,7 @@ bool MAGSAC<DatumType, ModelEstimator>::run(
     point_number = points_.rows; // Number of points
     const size_t sample_size = estimator_.sampleSize(); // The sample size required for the estimation
     size_t max_iteration = iteration_limit; // The maximum number of iterations initialized to the iteration limit
-    int iteration = 0; // Current number of iterations
-    gcransac::Model so_far_the_best_model; // Current best model
+    Model so_far_the_best_model; // Current best model
     ModelScore so_far_the_best_score; // The score of the current best model
     std::unique_ptr<size_t[]> minimal_sample(new size_t[sample_size]); // The sample used for the estimation
 
@@ -158,13 +149,12 @@ bool MAGSAC<DatumType, ModelEstimator>::run(
     constexpr size_t max_unsuccessful_model_generations = 50;
 
     // Main MAGSAC iteration
-    while (mininum_iteration_number > iteration ||
-           iteration < max_iteration) {
-        // Increase the current iteration number
-        ++iteration;
+    size_t iteration = 0;  // Current number of iterations
+    while (mininum_iteration_number > iteration || iteration < max_iteration) {
+        ++iteration;  // Increase the current iteration number
 
         // Sample a minimal subset
-        std::vector<gcransac::Model> models; // The set of estimated models
+        std::vector<Model> models; // The set of estimated models
         size_t unsuccessful_model_generations = 0; // The number of unsuccessful model generations
         // Try to select a minimal sample and estimate the implied model parameters
         while (++unsuccessful_model_generations < max_unsuccessful_model_generations) {
@@ -192,29 +182,19 @@ bool MAGSAC<DatumType, ModelEstimator>::run(
         }
 
         // If the method was not able to generate any usable models, break the cycle.
-        iteration += unsuccessful_model_generations - 1;
+        iteration += (unsuccessful_model_generations - 1);
 
         // Select the so-far-the-best from the estimated models
         for (const auto &model: models) {
             ModelScore score; // The score of the current model
-            gcransac::Model refined_model; // The refined model parameters
+            Model refined_model; // The refined model parameters
 
             // Apply sigma-consensus to refine the model parameters by marginalizing over the noise level sigma
             bool success;
-            if (magsac_version == Version::MAGSAC_ORIGINAL) {
-                success = sigmaConsensus(points_,
-                                         model,
-                                         refined_model,
-                                         score,
-                                         estimator_,
-                                         so_far_the_best_score);
+            if (magsac_version == "MAGSAC_ORIGINAL") {
+                success = sigmaConsensus(points_, model, refined_model, score, estimator_, so_far_the_best_score);
             } else {
-                success = sigmaConsensusPlusPlus(points_,
-                                                 model,
-                                                 refined_model,
-                                                 score,
-                                                 estimator_,
-                                                 so_far_the_best_score);
+                success = sigmaConsensusPlusPlus(points_, model, refined_model, score, estimator_, so_far_the_best_score);
             }
 
             // Continue if the model was rejected
@@ -242,11 +222,11 @@ bool MAGSAC<DatumType, ModelEstimator>::run(
 }
 
 
-template<class DatumType, class ModelEstimator>
-bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensus(
+template<class ModelEstimator>
+bool MAGSAC<ModelEstimator>::sigmaConsensus(
         const cv::Mat &points_,
-        const gcransac::Model &model_,
-        gcransac::Model &refined_model_,
+        const Model &model_,
+        Model &refined_model_,
         ModelScore &score_,
         const ModelEstimator &estimator_,
         const ModelScore &best_score_) {
@@ -316,7 +296,7 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensus(
         score_.inlier_number = points_close;
     }
 
-    std::vector<gcransac::Model> sigma_models;
+    std::vector<Model> sigma_models;
     std::vector<size_t> sigma_inliers;
     std::vector<double> final_weights;
 
@@ -326,10 +306,8 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensus(
     // Sort the residuals in ascending order
     std::sort(all_residuals.begin(), all_residuals.end(), comparator);
 
-    // The maximum threshold is set to be slightly bigger than the distance of the
-    // farthest possible inlier.
-    current_maximum_sigma =
-            all_residuals.back().first + std::numeric_limits<double>::epsilon();
+    // The maximum threshold is set to be slightly bigger than the distance of the farthest possible inlier.
+    current_maximum_sigma = all_residuals.back().first + std::numeric_limits<double>::epsilon();
 
     const double sigma_step = current_maximum_sigma / partition_number;
 
@@ -364,8 +342,8 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensus(
         // Check if there are enough inliers to fit a model
         if (sigma_inliers.size() > sample_size) {
             // Estimating the model which the current set of inliers imply
-            std::vector<gcransac::Model> sigma_models;
-            estimator_.estimateModelNonminimal(points_,
+            std::vector<Model> sigma_models;
+            estimator_.estimateModelNonMinimal(points_,
                                                &(sigma_inliers)[0],
                                                sigma_inlier_number,
                                                &sigma_models);
@@ -382,8 +360,7 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensus(
                     const size_t &point_idx = sigma_inliers[relative_point_idx];
 
                     // Calculate the residual of the current point
-                    residual_i_2 = estimator_.squaredResidual(points_.row(point_idx),
-                                                              sigma_models[0]);
+                    residual_i_2 = estimator_.squaredResidual(points_.row(point_idx), sigma_models[0]);
 
                     // Calculate the probability of the i-th point assuming Gaussian distribution
                     // TODO: replace by Chi-square distribution
@@ -391,8 +368,6 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensus(
 
                     // Store the probability of the i-th point coming from the current partition
                     point_weights_par[partition_idx][relative_point_idx] += probability_i;
-
-
                 }
             }
         }
@@ -443,7 +418,7 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensus(
     }
 
     // Estimate the model parameters using weighted least-squares fitting
-    if (!estimator_.estimateModelNonminimal(
+    if (!estimator_.estimateModelNonMinimal(
             points_, // All input points
             &(sigma_inliers)[0], // Points which have higher than 0 probability of being inlier
             static_cast<int>(sigma_inliers.size()), // Number of possible inliers
@@ -483,10 +458,10 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensus(
     return false;
 }
 
-template<class DatumType, class ModelEstimator>
-void MAGSAC<DatumType, ModelEstimator>::getModelQuality(
+template<class ModelEstimator>
+void MAGSAC<ModelEstimator>::getModelQuality(
         const cv::Mat &points_, // All data points
-        const gcransac::Model &model_, // The model parameter
+        const Model &model_, // The model parameter
         const ModelEstimator &estimator_, // The model estimator class
         double &marginalized_iteration_number_, // The marginalized iteration number to be calculated
         double &score_) // The score to be calculated
@@ -560,11 +535,11 @@ void MAGSAC<DatumType, ModelEstimator>::getModelQuality(
     marginalized_iteration_number_ = marginalized_iteration_number_ / partition_number;
 }
 
-template<class DatumType, class ModelEstimator>
-bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensusPlusPlus(
+template<class ModelEstimator>
+bool MAGSAC<ModelEstimator>::sigmaConsensusPlusPlus(
         const cv::Mat &points_,
-        const gcransac::Model &model_,
-        gcransac::Model &refined_model_,
+        const Model &model_,
+        Model &refined_model_,
         ModelScore &score_,
         const ModelEstimator &estimator_,
         const ModelScore &best_score_) {
@@ -663,7 +638,7 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensusPlusPlus(
     }
 
     // Models fit by weighted least-squares fitting
-    std::vector<gcransac::Model> sigma_models;
+    std::vector<Model> sigma_models;
     // Points used in the weighted least-squares fitting
     std::vector<size_t> sigma_inliers;
     // Weights used in the the weighted least-squares fitting
@@ -683,7 +658,7 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensusPlusPlus(
     const double weight_zero = one_over_sigma * gamma_difference;
 
     // Initialize the polished model with the initial one
-    gcransac::Model polished_model = model_;
+    Model polished_model = model_;
     // A flag to determine if the initial model has been updated
     bool updated = false;
 
@@ -771,7 +746,7 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensusPlusPlus(
         }
 
         // Estimate the model parameters using weighted least-squares fitting
-        if (!estimator_.estimateModelNonminimal(
+        if (!estimator_.estimateModelNonMinimal(
                 points_, // All input points
                 &(sigma_inliers)[0], // Points which have higher than 0 probability of being inlier
                 static_cast<int>(sigma_inliers.size()), // Number of possible inliers
@@ -825,10 +800,10 @@ bool MAGSAC<DatumType, ModelEstimator>::sigmaConsensusPlusPlus(
     return false;
 }
 
-template<class DatumType, class ModelEstimator>
-void MAGSAC<DatumType, ModelEstimator>::getModelQualityPlusPlus(
+template<class ModelEstimator>
+void MAGSAC<ModelEstimator>::getModelQualityPlusPlus(
         const cv::Mat &points_, // All data points
-        const gcransac::Model &model_, // The model parameter
+        const Model &model_, // The model parameter
         const ModelEstimator &estimator_, // The model estimator class
         double &score_, // The score to be calculated
         const double &previous_best_score_) // The score of the previous so-far-the-best model
