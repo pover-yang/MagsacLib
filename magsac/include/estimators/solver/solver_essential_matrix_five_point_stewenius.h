@@ -24,7 +24,7 @@ namespace estimator::solver {
         }
 
         // Estimate the model parameters from the given point sample using weighted fitting if possible.
-        OLGA_INLINE bool estimateModel(
+        inline bool estimateModel(
                 const cv::Mat &data_, // The set of data points
                 const size_t *sample_, // The sample used for the estimation
                 size_t sample_number_, // The size of the sample
@@ -53,7 +53,7 @@ namespace estimator::solver {
                 const Eigen::Matrix<double, 1, 4> nullSpace[3][3]) const;
     };
 
-    OLGA_INLINE bool EssentialMatrixFivePointSteweniusSolver::estimateModel(
+    inline bool EssentialMatrixFivePointSteweniusSolver::estimateModel(
             const cv::Mat &data_,
             const size_t *sample_,
             size_t sample_number_,

@@ -1,14 +1,9 @@
 #pragma once
 
-#include <limits>
-#include <chrono>
-#include <memory>
-#include <utility>
 #include "model.h"
 #include "model_score.h"
 #include "samplers/sampler.h"
-#include "samplers/uniform_sampler.h"
-#include <math.h>
+//#include "samplers/uniform_sampler.h"
 #include "gamma_values.cpp"
 
 #ifdef _WIN32
@@ -21,11 +16,10 @@
 template<class ModelEstimator>
 class MAGSAC {
 public:
-
-    MAGSAC(std::string magsac_version_ = "MAGSAC_PLUS_PLUS") :
+    explicit MAGSAC(std::string magsac_version_ = "MAGSAC_PLUS_PLUS") :
             iteration_limit(std::numeric_limits<size_t>::max()),
             maximum_threshold(10.0),
-            mininum_iteration_number(50),
+            minimum_iteration_number(50),
             partition_number(5),
             core_number(1),
             number_of_irwls_iters(1),
@@ -35,17 +29,44 @@ public:
             point_number(0),
             magsac_version(std::move(magsac_version_)) {}
 
-    ~MAGSAC() {}
+    ~MAGSAC() = default;
 
-    // A function to run MAGSAC.
-    bool run(
-            const cv::Mat &points_, // The input data points
-            const double confidence_, // The required confidence in the results
-            ModelEstimator &estimator_, // The model estimator
-            sampler::Sampler<cv::Mat, size_t> &sampler_, // The sampler used
-            Model &obtained_model_, // The estimated model parameters
-            int &iteration_number_, // The number of iterations done
-            ModelScore &model_score_); // The score of the estimated model
+    /*!
+     * A function to run MAGSAC.
+     * @param points_ The input data points
+     * @param confidence_ The required confidence in the results
+     * @param estimator_ The model estimator
+     * @param sampler_ The sampler used
+     * @param obtained_model_ The estimated model parameters
+     * @param iteration_number_ The number of iterations done
+     * @param model_score_ The score of the estimated model
+     * @return whether succeed
+     */
+    bool run(const cv::Mat &points_, double confidence_, ModelEstimator &estimator_, sampler::Sampler<cv::Mat, size_t> &sampler_,
+             Model &obtained_model_, int &iteration_number_, ModelScore &model_score_);
+
+    /*!
+     * The function determining the quality/score of a model using the original MAGSAC criterion.
+     * Note that this function is significantly slower than the quality function of MAGSAC++.
+     * @param points_ All data points
+     * @param model_ The input model
+     * @param estimator_ The model estimator
+     * @param marginalized_iteration_number_ The required number of iterations marginalized over the noise scale
+     * @param score_ The score/quality of the model
+     */
+    void getModelQuality(const cv::Mat &points_, const Model &model_, const ModelEstimator &estimator_,
+                         double &marginalized_iteration_number_, double &score_);
+
+    /*!
+     * The function determining the quality/score of a model using the MAGSAC++ criterion.
+     * @param points_ All data points
+     * @param model_ The model parameter
+     * @param estimator_ The model estimator class
+     * @param score_ The score to be calculated
+     * @param previous_best_score_ The score of the previous so-far-the-best model
+     */
+    void getModelQualityPlusPlus(const cv::Mat &points_, const Model &model_, const ModelEstimator &estimator_,
+                                 double &score_, const double &previous_best_score_);
 
     // A function to set the maximum inlier-outlier threshold
     void setMaximumThreshold(const double maximum_threshold_) {
@@ -67,28 +88,11 @@ public:
         iteration_limit = iteration_limit_;
     }
 
-    // The function determining the quality/score of a model using the original MAGSAC criterion.
-    // Note that this function is significantly slower than the quality function of MAGSAC++.
-    void getModelQuality(
-            const cv::Mat &points_, // All data points
-            const Model &model_, // The input model
-            const ModelEstimator &estimator_, // The model estimator
-            double &marginalized_iteration_number_, // The required number of iterations marginalized over the noise scale
-            double &score_); // The score/quality of the model
-
-    // The function determining the quality/score of a model using the MAGSAC++ criterion.
-    void getModelQualityPlusPlus(
-            const cv::Mat &points_, // All data points
-            const Model &model_, // The model parameter
-            const ModelEstimator &estimator_, // The model estimator class
-            double &score_, // The score to be calculated
-            const double &previous_best_score_); // The score of the previous so-far-the-best model
-
     size_t number_of_irwls_iters;
 protected:
     std::string magsac_version; // The version of MAGSAC used
     size_t iteration_limit; // Maximum number of iterations allowed
-    size_t mininum_iteration_number; // Minimum number of iteration before terminating
+    size_t minimum_iteration_number; // Minimum number of iteration before terminating
     double maximum_threshold; // The maximum sigma value
     size_t core_number; // Number of core used in sigma-consensus
     int point_number; // The current point number
@@ -150,7 +154,7 @@ bool MAGSAC<ModelEstimator>::run(
 
     // Main MAGSAC iteration
     size_t iteration = 0;  // Current number of iterations
-    while (mininum_iteration_number > iteration || iteration < max_iteration) {
+    while (minimum_iteration_number > iteration || iteration < max_iteration) {
         ++iteration;  // Increase the current iteration number
 
         // Sample a minimal subset
@@ -163,12 +167,6 @@ bool MAGSAC<ModelEstimator>::run(
             // minimal_sample.get(): The minimal sample
             // sample_size: The size of a minimal sample
             if (!sampler_.sample(pool, minimal_sample.get(), sample_size)) {
-                continue;
-            }
-
-            // Check if the selected sample is valid before estimating the model which usually takes more time.
-            // points_:  All points; minimal_sample.get(): The current sample
-            if (!estimator_.isValidSample(points_, minimal_sample.get())) {
                 continue;
             }
 
@@ -343,10 +341,7 @@ bool MAGSAC<ModelEstimator>::sigmaConsensus(
         if (sigma_inliers.size() > sample_size) {
             // Estimating the model which the current set of inliers imply
             std::vector<Model> sigma_models;
-            estimator_.estimateModelNonMinimal(points_,
-                                               &(sigma_inliers)[0],
-                                               sigma_inlier_number,
-                                               &sigma_models);
+            estimator_.estimateModelNonMinimal(points_, &(sigma_inliers)[0], sigma_inlier_number, &sigma_models, nullptr);
 
             // If the estimation was successful calculate the implied probabilities
             if (sigma_models.size() == 1) {

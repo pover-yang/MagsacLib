@@ -26,7 +26,7 @@ namespace sampler {
         virtual bool initialize(const DataContainer *const container_) = 0;
 
         // Samples the input variable data and fills the std::vector subset with the samples.
-        OLGA_INLINE virtual bool sample(const std::vector<IndexType> &pool_, IndexType *const subset_, size_t sample_size_) = 0;
+        inline virtual bool sample(const std::vector<IndexType> &pool_, IndexType *const subset_, size_t sample_size_) = 0;
 
         bool isInitialized() {
             return initialized;

@@ -42,9 +42,9 @@ namespace estimator {
         ~EssentialMatrixEstimator() {}
 
         // Estimating the essential matrix from a minimal sample
-        OLGA_INLINE bool estimateModel(const cv::Mat &data, // The data_ points
-                                       const size_t *sample, // The selected sample_ which will be used for estimation
-                                       std::vector<Model> *models) const // The estimated model_ parameters
+        inline bool estimateModel(const cv::Mat &data, // The data_ points
+                                  const size_t *sample, // The selected sample_ which will be used for estimation
+                                  std::vector<Model> *models) const // The estimated model_ parameters
         {
             constexpr size_t sample_size = sampleSize(); // The size of a minimal sample
 
@@ -68,8 +68,8 @@ namespace estimator {
         }
 
         // Estimating the model from a non-minimal sample
-        OLGA_INLINE bool estimateModelNonMinimal(const cv::Mat &data_, const size_t *sample_, const size_t &sample_number_,
-                                                 std::vector<Model> *models_, const double *weights_ = nullptr) const {
+        inline bool estimateModelNonMinimal(const cv::Mat &data_, const size_t *sample_, const size_t &sample_number_,
+                                            std::vector<Model> *models_, const double *weights_ = nullptr) const {
             if (sample_number_ < nonMinimalSampleSize()) {
                 return false;
             }
@@ -156,20 +156,20 @@ namespace estimator {
         }
 
         // The size of a sample_ when doing inner RANSAC on a non-minimal sample
-        OLGA_INLINE size_t inlierLimit() const {
+        inline size_t inlierLimit() const {
             return 7 * sampleSize();
         }
 
         // The squared sampson distance between a point_ correspondence and an essential matrix
-        OLGA_INLINE double sampsonDistance(const cv::Mat &point_,
-                                           const Eigen::Matrix3d &descriptor_) const {
+        inline double sampsonDistance(const cv::Mat &point_,
+                                      const Eigen::Matrix3d &descriptor_) const {
             const double squared_distance = squaredSampsonDistance(point_, descriptor_);
             return sqrt(squared_distance);
         }
 
         // The sampson distance between a point_ correspondence and an essential matrix
-        OLGA_INLINE double squaredSampsonDistance(const cv::Mat &point_,
-                                                  const Eigen::Matrix3d &descriptor_) const {
+        inline double squaredSampsonDistance(const cv::Mat &point_,
+                                             const Eigen::Matrix3d &descriptor_) const {
             const double *s = reinterpret_cast<double *>(point_.data);
             const double
                     &x1 = *s,
@@ -200,8 +200,8 @@ namespace estimator {
         }
 
         // The symmetric epipolar distance between a point_ correspondence and an essential matrix
-        OLGA_INLINE double squaredSymmetricEpipolarDistance(const cv::Mat &point_,
-                                                            const Eigen::MatrixXd &descriptor_) const {
+        inline double squaredSymmetricEpipolarDistance(const cv::Mat &point_,
+                                                       const Eigen::MatrixXd &descriptor_) const {
             const double *s = reinterpret_cast<double *>(point_.data);
             const double
                     &x1 = *s,
@@ -233,26 +233,26 @@ namespace estimator {
         }
 
         // The squared residual function used for deciding which points are inliers
-        OLGA_INLINE double squaredResidual(const cv::Mat &point_,
-                                           const Model &model_) const {
+        inline double squaredResidual(const cv::Mat &point_,
+                                      const Model &model_) const {
             return squaredResidual(point_, model_.descriptor);
         }
 
         // The squared residual function used for deciding which points are inliers
-        OLGA_INLINE double squaredResidual(const cv::Mat &point_,
-                                           const Eigen::MatrixXd &descriptor_) const {
+        inline double squaredResidual(const cv::Mat &point_,
+                                      const Eigen::MatrixXd &descriptor_) const {
             return squaredSampsonDistance(point_, descriptor_);
         }
 
         // The residual function used for deciding which points are inliers
-        OLGA_INLINE double residual(const cv::Mat &point_,
-                                    const Model &model_) const {
+        inline double residual(const cv::Mat &point_,
+                               const Model &model_) const {
             return residual(point_, model_.descriptor);
         }
 
         // The residual function used for deciding which points are inliers
-        OLGA_INLINE double residual(const cv::Mat &point_,
-                                    const Eigen::MatrixXd &descriptor_) const {
+        inline double residual(const cv::Mat &point_,
+                               const Eigen::MatrixXd &descriptor_) const {
             return sampsonDistance(point_, descriptor_);
         }
 
@@ -330,7 +330,7 @@ namespace estimator {
         }
 
         /************** Oriented epipolar constraints ******************/
-        OLGA_INLINE void getEpipole(
+        inline void getEpipole(
                 Eigen::Vector3d &epipole_, // The epipole
                 const Eigen::Matrix3d &essential_matrix_) const {
             constexpr double epsilon = 1.9984e-15;
@@ -345,7 +345,7 @@ namespace estimator {
             epipole_ = essential_matrix_.row(1).cross(essential_matrix_.row(2));
         }
 
-        OLGA_INLINE double getOrientationSignum(
+        inline double getOrientationSignum(
                 const Eigen::Matrix3d &essential_matrix_,
                 const Eigen::Vector3d &epipole_,
                 const cv::Mat &point_) const {
@@ -355,7 +355,7 @@ namespace estimator {
             return signum1 * signum2;
         }
 
-        OLGA_INLINE int isOrientationValid(
+        inline int isOrientationValid(
                 const Eigen::Matrix3d &essential_matrix_, // The fundamental matrix
                 const cv::Mat &data_, // The data points
                 const size_t *sample_, // The sample used for the estimation

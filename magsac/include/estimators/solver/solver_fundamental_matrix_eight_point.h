@@ -30,7 +30,7 @@ namespace estimator::solver {
 
         // Estimate the model parameters from the given point sample
         // using weighted fitting if possible.
-        OLGA_INLINE bool estimateModel(
+        inline bool estimateModel(
                 const cv::Mat &data_, // The set of data points
                 const size_t *sample_, // The sample used for the estimation
                 size_t sample_number_, // The size of the sample
@@ -38,7 +38,7 @@ namespace estimator::solver {
                 const double *weights_ = nullptr) const; // The weight for each point
     };
 
-    OLGA_INLINE bool FundamentalMatrixEightPointSolver::estimateModel(
+    inline bool FundamentalMatrixEightPointSolver::estimateModel(
             const cv::Mat &data_,
             const size_t *sample_,
             size_t sample_number_,

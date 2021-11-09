@@ -33,10 +33,10 @@ namespace sampler {
 
         // Samples the input variable data and fills the std::vector subset with the
         // samples.
-        OLGA_INLINE bool sample(const std::vector<size_t> &pool_, size_t *const subset_, size_t sample_size_);
+        inline bool sample(const std::vector<size_t> &pool_, size_t *const subset_, size_t sample_size_);
     };
 
-    OLGA_INLINE bool UniformSampler::sample(const std::vector<size_t> &pool_, size_t *const subset_, size_t sample_size_) {
+    inline bool UniformSampler::sample(const std::vector<size_t> &pool_, size_t *const subset_, size_t sample_size_) {
         // If there are not enough points in the pool, interrupt the procedure.
         if (sample_size_ > pool_.size()) {
             return false;

@@ -25,7 +25,6 @@ int main(int argc, char **argv) {
 
     const double ransac_confidence = 0.90; // The required confidence in the results
     const double maximum_threshold = 2; // The maximum sigma value allowed in MAGSAC
-    const double drawing_threshold = 5; // Threshold for visualization which not used by the algorithm
 
     // Apply MAGSAC with a reasonably set maximum threshold
     LOG(INFO) << "Running MAGSAC with fairly high maximum threshold (" << 2 << " px)";
@@ -96,7 +95,7 @@ void testEssentialMatrixFitting(
     LOG(INFO) << "Elapsed time = " << elapsed_seconds.count() << " seconds";
 
     // Visualization part.
-    double drawing_threshold_ = 2;
+    const double drawing_threshold_ = 5; // Threshold for visualization which not used by the algorithm
     const double normalized_drawing_threshold = drawing_threshold_ * normalizing_multiplier;
 
     std::vector<int> obtained_labeling(points.rows, 0);
