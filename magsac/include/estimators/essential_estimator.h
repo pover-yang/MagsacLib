@@ -4,8 +4,8 @@
 
 #include "model.h"
 #include "estimator.h"
-#include "estimators/solver_essential_matrix_five_point_stewenius.h"
-#include "estimators/solver_essential_matrix_bundle_adjustment.h"
+#include "estimators/solver/solver_essential_matrix_five_point_stewenius.h"
+#include "estimators/solver/solver_essential_matrix_bundle_adjustment.h"
 
 namespace estimator {
     // This is the estimator class for estimating a essential matrix between two images.

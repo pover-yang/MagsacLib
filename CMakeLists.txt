@@ -142,7 +142,7 @@ target_link_libraries(
         gflags)
 
 #add_executable(SampleProject cpp_example.cpp)
-add_executable(SampleProject new_example.cpp utils.cpp utils.h)
+add_executable(SampleProject test_example.cpp utils.cpp utils.h)
 target_link_libraries(SampleProject PUBLIC
         ${PROJECT_NAME}
         ${OpenCV_LIBS}
