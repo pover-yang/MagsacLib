@@ -64,11 +64,13 @@ void testEssentialMatrixFitting(
 
     // The robust homography estimator class containing the function for the fitting and residual calculation
     estimator::DefaultEssentialMatrixEstimator estimator(intrinsics_src, intrinsics_dst, 0.0);
+//    estimator::TestEssentialMatrixEstimator estimator(intrinsics_src, intrinsics_dst, 0.0);
     EssentialMatrix model; // The estimated model
 
     // Initialize the sampler used for selecting minimal samples
     sampler::UniformSampler main_sampler(&points);
     MAGSAC<estimator::DefaultEssentialMatrixEstimator> magsac(use_magsac_plus_plus_ ? "MAGSAC_PLUS_PLUS" : "MAGSAC_ORIGINAL");
+//    MAGSAC<estimator::TestEssentialMatrixEstimator> magsac(use_magsac_plus_plus_ ? "MAGSAC_PLUS_PLUS" : "MAGSAC_ORIGINAL");
 
     // The threshold Should also be normalized.
     magsac.setReferenceThreshold(magsac.getReferenceThreshold() * normalizing_multiplier);
@@ -95,7 +97,7 @@ void testEssentialMatrixFitting(
     LOG(INFO) << "Elapsed time = " << elapsed_seconds.count() << " seconds";
 
     // Visualization part.
-    const double drawing_threshold_ = 5; // Threshold for visualization which not used by the algorithm
+    const double drawing_threshold_ = 3; // Threshold for visualization which not used by the algorithm
     const double normalized_drawing_threshold = drawing_threshold_ * normalizing_multiplier;
 
     std::vector<int> obtained_labeling(points.rows, 0);

@@ -12,7 +12,6 @@ public:
 
     Model(const Eigen::MatrixXd &descriptor_) :
             descriptor(descriptor_) {
-
     }
 
     Model() {

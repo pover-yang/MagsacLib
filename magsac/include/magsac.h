@@ -3,12 +3,7 @@
 #include "model.h"
 #include "model_score.h"
 #include "samplers/sampler.h"
-//#include "samplers/uniform_sampler.h"
 #include "gamma_values.cpp"
-
-#ifdef _WIN32
-#include <ppl.h>
-#endif
 
 #include <gflags/gflags.h>
 #include <glog/logging.h>
@@ -142,11 +137,7 @@ bool MAGSAC<ModelEstimator>::run(
     }
 
     if (points_.rows < sample_size) {
-        LOG(WARNING) << "There are not enough points for applying robust estimation. Minimum is "
-                     << static_cast<int>(sample_size)
-                     << "; while "
-                     << static_cast<int>(points_.rows)
-                     << " are given.";
+        LOG(WARNING) << "There are not enough points for applying robust estimation";
         return false;
     }
 

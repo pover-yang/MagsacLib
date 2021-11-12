@@ -1,11 +1,11 @@
 #pragma once
 
 #include <Eigen/Eigen>
-
 #include "model.h"
 #include "estimator.h"
 #include "estimators/solver/solver_essential_matrix_five_point_stewenius.h"
 #include "estimators/solver/solver_essential_matrix_bundle_adjustment.h"
+#include "estimators/solver/solver_essential_matrix_three_point_sweeny.h"
 
 namespace estimator {
     // This is the estimator class for estimating a essential matrix between two images.
@@ -50,6 +50,7 @@ namespace estimator {
 
             // Estimating the model_ parameters by the solver engine
             if (!minimal_solver->estimateModel(data, sample, sample_size, *models)) {
+                LOG(ERROR) << "NO Estimated Model";
                 return false;
             }
 
@@ -396,4 +397,6 @@ namespace estimator {
 
     typedef EssentialMatrixEstimator<solver::EssentialMatrixFivePointSteweniusSolver, solver::EssentialMatrixBundleAdjustmentSolver>
             DefaultEssentialMatrixEstimator;
+    typedef EssentialMatrixEstimator<solver::EssentialMatrixThreePointSweenySolver, solver::EssentialMatrixBundleAdjustmentSolver>
+            TestEssentialMatrixEstimator;
 }
