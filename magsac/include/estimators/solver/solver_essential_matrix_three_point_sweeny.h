@@ -57,7 +57,7 @@ namespace estimator::solver {
             std::vector<Model> &models,
             const double *weights_) {
 
-        const Eigen::Vector3d axis(0, 1, 0);
+        const Eigen::Vector3d axis(0, 0, 1);
         const double *data_ptr = reinterpret_cast<double *>(data.data);
         const int cols = data.cols;
         Eigen::Matrix<double, 3, 3> M, C, K;

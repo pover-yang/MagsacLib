@@ -8,13 +8,13 @@
 #include "estimators/solver/solver_essential_matrix_three_point_sweeny.h"
 
 namespace estimator {
-    // This is the estimator class for estimating a essential matrix between two images.
+    // This is the estimator class for estimating an essential matrix between two images.
     // A model_ estimation method and error calculation method are implemented
     template<class MinimalSolverEngine, class NonMinimalSolverEngine>
     class EssentialMatrixEstimator : public Estimator<cv::Mat, Model> {
     protected:
-        const std::shared_ptr<const MinimalSolverEngine> minimal_solver;
-        const std::shared_ptr<const NonMinimalSolverEngine> non_minimal_solver;
+        const std::shared_ptr<const MinimalSolverEngine> minimal_solver = std::make_shared<const MinimalSolverEngine>();
+        const std::shared_ptr<const NonMinimalSolverEngine> non_minimal_solver = std::make_shared<const NonMinimalSolverEngine>();
         const Eigen::Matrix3d intrinsics_src, intrinsics_dst; // The intrinsic parameters of the camera
 
         // The lower bound of the inlier ratio which is required to pass the validity test.
@@ -34,8 +34,6 @@ namespace estimator {
                                  const double point_ratio_for_selecting_from_multiple_models_ = 0.05) :
                 intrinsics_src(std::move(intrinsics_src_)),
                 intrinsics_dst(std::move(intrinsics_dst_)),
-                minimal_solver(std::make_shared<const MinimalSolverEngine>()),
-                non_minimal_solver(std::make_shared<const NonMinimalSolverEngine>()),
                 minimum_inlier_ratio_in_validity_check(std::clamp(minimum_inlier_ratio_in_validity_check_, 0.0, 1.0)),
                 point_ratio_for_selecting_from_multiple_models(std::clamp(point_ratio_for_selecting_from_multiple_models_, 0.0, 1.0)) {}
 

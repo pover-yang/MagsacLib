@@ -24,8 +24,7 @@ void drawMatches(const cv::Mat &points_, const std::vector<int> &labeling_,
 
 void showImage(const cv::Mat &image_, std::string window_name_, int max_width_, int max_height_, bool wait_ = true);
 
-int synthesisCorresponds(int num, Eigen::AngleAxisd &real_R, Eigen::Vector3d &real_t, Eigen::Matrix3d &cam_mtx,
-                         double jitter_degree, double height, double noise_max,
-                         std::vector<Eigen::Vector3d> &x1_set, std::vector<Eigen::Vector3d> &x2_set);
+cv::Mat synthesisCorresponds(int num, Eigen::AngleAxisd &real_R, Eigen::Vector3d &real_t, Eigen::Matrix3d &cam_mtx,
+                             double jitter_degree, int height, double noise_max);
 
 #endif //MAGSACLIB_UTILS_H

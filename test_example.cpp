@@ -1,3 +1,4 @@
+#include <random>
 #include <fstream>
 #include <vector>
 #include <chrono>
@@ -18,8 +19,8 @@
 void testEssentialMatrixFitting(double ransac_confidence_, double maximum_threshold_, bool use_magsac_plus_plus_,
                                 bool use_real_data);
 
-cv::Mat generateData(Eigen::Matrix3d &intrinsics_src, Eigen::Matrix3d &intrinsics_dst,
-                     bool use_real_data, cv::Mat &img1, cv::Mat &img2, cv::Mat &points);
+cv::Mat generateTestData(Eigen::Matrix3d &intrinsics_src, Eigen::Matrix3d &intrinsics_dst,
+                         bool use_real_data, cv::Mat &img1, cv::Mat &img2, cv::Mat &points);
 
 
 int main(int argc, char **argv) {
@@ -28,16 +29,16 @@ int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
 
     const double ransac_confidence = 0.90; // The required confidence in the results
-    const double maximum_threshold = 2; // The maximum sigma value allowed in MAGSAC
+    const double maximum_threshold = 5; // The maximum sigma value allowed in MAGSAC
 
     // Apply MAGSAC with a reasonably set maximum threshold
-    LOG(INFO) << "Running MAGSAC with fairly high maximum threshold (" << 2 << " px)";
-    testEssentialMatrixFitting(ransac_confidence, maximum_threshold, false, true);
+    LOG(INFO) << "Running MAGSAC with Three Point Solver";
+    testEssentialMatrixFitting(ransac_confidence, maximum_threshold, false, false);
     cv::waitKey(0);
 
-    // Apply MAGSAC with a reasonably set maximum threshold
-    LOG(INFO) << "Running MAGSAC++ with fairly high maximum threshold (" << 2 << " px)";
-    testEssentialMatrixFitting(ransac_confidence, 2.0, true, true);
+//    // Apply MAGSAC with a reasonably set maximum threshold
+//    LOG(INFO) << "Running MAGSAC with Five Point Solver";
+//    testEssentialMatrixFitting(ransac_confidence, 2.0, false, true);
 
     return 0;
 }
@@ -50,17 +51,17 @@ void testEssentialMatrixFitting(
         bool use_real_data) {
     cv::Mat norm_points, points, img1, img2;
     Eigen::Matrix3d intrinsics_src, intrinsics_dst;
-    norm_points = generateData(intrinsics_src, intrinsics_dst, use_real_data, img1, img2, points);
+    norm_points = generateTestData(intrinsics_src, intrinsics_dst, use_real_data, img1, img2, points);
 
     // Initialize the sampler used for selecting minimal samples
-    sampler::UniformSampler main_sampler(&points);
+    sampler::UniformSampler main_sampler(&norm_points);
 
     // The robust essential matrix estimator class containing the function for the fitting and residual calculation
-    estimator::DefaultEssentialMatrixEstimator estimator(intrinsics_src, intrinsics_dst, 0.0);
-    MAGSAC<estimator::DefaultEssentialMatrixEstimator> magsac(use_magsac_plus_plus_ ? "MAGSAC_PLUS_PLUS" : "MAGSAC_ORIGINAL");
+//    estimator::DefaultEssentialMatrixEstimator estimator(intrinsics_src, intrinsics_dst, 0.0);
+//    MAGSAC<estimator::DefaultEssentialMatrixEstimator> magsac(use_magsac_plus_plus_ ? "MAGSAC_PLUS_PLUS" : "MAGSAC_ORIGINAL");
 
-//    estimator::TestEssentialMatrixEstimator estimator(intrinsics_src, intrinsics_dst, 0.0);
-//    MAGSAC<estimator::TestEssentialMatrixEstimator> magsac(use_magsac_plus_plus_ ? "MAGSAC_PLUS_PLUS" : "MAGSAC_ORIGINAL");
+    estimator::TestEssentialMatrixEstimator estimator(intrinsics_src, intrinsics_dst, 0.0);
+    MAGSAC<estimator::TestEssentialMatrixEstimator> magsac(use_magsac_plus_plus_ ? "MAGSAC_PLUS_PLUS" : "MAGSAC_ORIGINAL");
 
     // Normalize the threshold by the average of the focal lengths
     const double normalizing_multiplier = 1.0 / ((intrinsics_src(0, 0) + intrinsics_src(1, 1) +
@@ -89,26 +90,26 @@ void testEssentialMatrixFitting(
     LOG(INFO) << "Actual number of iterations drawn by MAGSAC at " << ransac_confidence_ << " confidence = " << iteration_number;
     LOG(INFO) << "Elapsed time = " << elapsed_seconds.count() << " seconds";
 
-    if (use_real_data) {
-        // Visualization part.
-        const double drawing_threshold_ = 3; // Threshold for visualization which not used by the algorithm
-        const double normalized_drawing_threshold = drawing_threshold_ * normalizing_multiplier;
+    // Visualization part.
+    const double drawing_threshold_ = 2; // Threshold for visualization which not used by the algorithm
+    const double normalized_drawing_threshold = drawing_threshold_ * normalizing_multiplier;
 
-        std::vector<int> obtained_labeling(points.rows, 0);
-        size_t inlier_number = 0;
+    std::vector<int> obtained_labeling(norm_points.rows, 0);
+    size_t inlier_number = 0;
 
-        for (auto pt_idx = 0; pt_idx < points.rows; ++pt_idx) {
-            // Computing the residual of the point given the estimated model
-            auto residual = estimator.residual(norm_points.row(pt_idx), model.descriptor);
+    for (auto pt_idx = 0; pt_idx < norm_points.rows; ++pt_idx) {
+        // Computing the residual of the point given the estimated model
+        auto residual = estimator.residual(norm_points.row(pt_idx), model.descriptor);
 
-            // Change the label to 'inlier' if the residual is smaller than the threshold
-            if (normalized_drawing_threshold >= residual) {
-                obtained_labeling[pt_idx] = 1;
-                ++inlier_number;
-            }
+        // Change the label to 'inlier' if the residual is smaller than the threshold
+        if (normalized_drawing_threshold >= residual) {
+            obtained_labeling[pt_idx] = 1;
+            ++inlier_number;
         }
+    }
+    LOG(INFO) << "Number of points closer than " << drawing_threshold_ << " is " << static_cast<int>(inlier_number);
 
-        LOG(INFO) << "Number of points closer than " << drawing_threshold_ << " is " << static_cast<int>(inlier_number);
+    if (use_real_data) {
         // Draw the matches to the images
         cv::Mat out_image;
         drawMatches(points, obtained_labeling, img1, img2, out_image);
@@ -126,8 +127,8 @@ void testEssentialMatrixFitting(
 }
 
 
-cv::Mat generateData(Eigen::Matrix3d &intrinsics_src, Eigen::Matrix3d &intrinsics_dst,
-                     bool use_real_data, cv::Mat &img1, cv::Mat &img2, cv::Mat &points) {
+cv::Mat generateTestData(Eigen::Matrix3d &intrinsics_src, Eigen::Matrix3d &intrinsics_dst,
+                         bool use_real_data, cv::Mat &img1, cv::Mat &img2, cv::Mat &points) {
     cv::Mat normalized_points;
     if (use_real_data) {
         // Load the images of the current test scene
@@ -144,7 +145,25 @@ cv::Mat generateData(Eigen::Matrix3d &intrinsics_src, Eigen::Matrix3d &intrinsic
         // Normalize the point coordinates by the intrinsic matrices
         normalized_points = normalizeCorrespondences(points, intrinsics_src, intrinsics_dst);
     } else {
+        intrinsics_src << 4523.2365, 0, 1920, 0, 4523.2365, 1080, 0, 0, 1;
+        intrinsics_dst << 4523.2365, 0, 1920, 0, 4523.2365, 1080, 0, 0, 1;
+
+        int num_corresponds = 500;
+        Eigen::Vector3d axis(0, 0, 1);
+        double rotation_angle = 45;
+        Eigen::AngleAxisd relative_rotation(rotation_angle / 180 * M_PI, axis);
+
+        double x = (double(rand()) / RAND_MAX - 0.5) * 2 * 10;
+        double y = (double(rand()) / RAND_MAX - 0.5) * 2 * 10;
+        double z = (double(rand()) / RAND_MAX - 0.5) * 2 * 0.5;
+        Eigen::Vector3d relative_translation(x, y, z);
+        double jitter_degree = 2;
+        int height = 10;
+        double noise_max = 2;
+        normalized_points = synthesisCorresponds(num_corresponds, relative_rotation, relative_translation, intrinsics_src,
+                                                 jitter_degree, height, noise_max);
 
     }
     return normalized_points;
 }
+

@@ -106,6 +106,56 @@ cv::Mat normalizeCorrespondences(const cv::Mat &points_, const Eigen::Matrix3d &
 }
 
 
+cv::Mat synthesisCorresponds(int num, Eigen::AngleAxisd &real_R, Eigen::Vector3d &real_t, Eigen::Matrix3d &cam_mtx,
+                             double jitter_degree, int height, double noise_max) {
+    cv::Mat points_;
+    std::vector<Eigen::Vector3d> x1_set, x2_set;
+
+    std::uniform_int_distribution<int> xdist(-20, 20);
+    std::uniform_int_distribution<int> ydist(-15, 15);
+    std::uniform_int_distribution<int> zdist(50 - height, 50);
+    std::normal_distribution<double> n_noise(0, noise_max + 1e-10);
+    std::default_random_engine rng;
+
+    jitter_degree = jitter_degree / 180 * M_PI;
+    Eigen::Matrix3d jitter_mtx(Eigen::AngleAxisd(jitter_degree, Eigen::Vector3d::UnitX()));
+    for (int i = 0; i < num; i++) {
+        double x = xdist(rng) + double(rand()) / RAND_MAX;
+        double y = ydist(rng) + double(rand()) / RAND_MAX;
+        double z = zdist(rng);
+
+        Eigen::Vector3d X1(x, y, z);
+        Eigen::Vector3d X2 = real_R * jitter_mtx * X1 + real_t;
+
+        Eigen::Vector3d x1 = cam_mtx * X1 / X1[2];
+        Eigen::Vector3d x2 = cam_mtx * X2 / X2[2];
+
+        double nx = n_noise(rng);
+        double ny = n_noise(rng);
+        if (abs(nx) <= noise_max) {
+            x2[0] += nx;
+        }
+        if (abs(ny) <= noise_max) {
+            x2[1] += ny;
+        }
+
+        x1 = cam_mtx.inverse() * x1;
+        x2 = cam_mtx.inverse() * x2;
+
+        x1_set.push_back(x1);
+        x2_set.push_back(x2);
+    }
+
+    points_.create(static_cast<int>(x1_set.size()), 4, CV_64F);
+    for (int i = 0; i < x1_set.size(); ++i) {
+        points_.at<double>(i, 0) = x1_set[i][0];
+        points_.at<double>(i, 1) = x1_set[i][1];
+        points_.at<double>(i, 2) = x2_set[i][0];
+        points_.at<double>(i, 3) = x2_set[i][1];
+    }
+    return points_;
+}
+
 void drawMatches(const cv::Mat &points_, const std::vector<int> &labeling_,
                  const cv::Mat &image1_, const cv::Mat &image2_, cv::Mat &out_image_) {
     const size_t N = points_.rows;
@@ -163,45 +213,4 @@ void showImage(const cv::Mat &image_,
     if (wait_) {
         cv::waitKey(0);
     }
-}
-
-int synthesisCorresponds(int num, Eigen::AngleAxisd &real_R, Eigen::Vector3d &real_t, Eigen::Matrix3d &cam_mtx,
-                         double jitter_degree, double height, double noise_max,
-                         std::vector<Eigen::Vector3d> &x1_set, std::vector<Eigen::Vector3d> &x2_set) {
-
-    std::uniform_int_distribution<int> xdist(-20, 20);
-    std::uniform_int_distribution<int> ydist(-15, 15);
-    std::uniform_int_distribution<int> zdist(50 - height, 50);
-    std::normal_distribution<double> n_noise(0, noise_max + 1e-10);
-    std::default_random_engine rng;
-
-    jitter_degree = jitter_degree / 180 * M_PI;
-    Eigen::Matrix3d jitter_mtx(Eigen::AngleAxisd(jitter_degree, Eigen::Vector3d::UnitX()));
-    for (int i = 0; i < num; i++) {
-        double x = xdist(rng) + double(rand()) / RAND_MAX;
-        double y = ydist(rng) + double(rand()) / RAND_MAX;
-        double z = zdist(rng);
-
-        Eigen::Vector3d X1(x, y, z);
-        Eigen::Vector3d X2 = real_R * jitter_mtx * X1 + real_t;
-
-//        Vector3d x1 = cam_mtx * X1 / X1[2];
-//        Vector3d x2 = cam_mtx * X2 / X2[2];
-
-        Eigen::Vector3d x1 = X1 / X1[2];
-        Eigen::Vector3d x2 = X2 / X2[2];
-
-        double nx = n_noise(rng);
-        double ny = n_noise(rng);
-        if (abs(nx) <= noise_max) {
-            x2[0] += nx;
-        }
-        if (abs(ny) <= noise_max) {
-            x2[1] += ny;
-        }
-
-        x1_set.push_back(x1);
-        x2_set.push_back(x2);
-    }
-    return 0;
 }
