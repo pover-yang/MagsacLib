@@ -1,40 +1,37 @@
 #pragma once
 
-#include "solver_engine.h"
-#include "solver_fundamental_matrix_eight_point.h"
-#include "relative_pose/bundle.h"
-#include "relative_pose/essential.h"
+#include "solver_fundamental_matrix_eight_point.hpp"
+#include "./relative_pose/bundle.h"
+#include "./relative_pose/essential.h"
 
-namespace estimator::solver {
+namespace solver {
     // This is the estimator class for estimating the essential matrix between two images
     // from a larger-than-minimal sample using bundle adjustment.
-    class EssentialMatrixBundleAdjustmentSolver : public SolverEngine {
+    class EssentialMatrixBundleAdjustmentSolver {
     protected:
         // The options for the bundle adjustment
         pose_lib::BundleOptions bundle_options;
 
     public:
-        EssentialMatrixBundleAdjustmentSolver(
+        explicit EssentialMatrixBundleAdjustmentSolver(
                 const pose_lib::BundleOptions::LossType &loss_type_ = pose_lib::BundleOptions::LossType::TRUNCATED,
                 const size_t &maximum_iterations_ = 25) {
             bundle_options.loss_type = loss_type_;
             bundle_options.max_iterations = maximum_iterations_;
         }
 
-        ~EssentialMatrixBundleAdjustmentSolver() {
-        }
+        ~EssentialMatrixBundleAdjustmentSolver() = default;
 
-        pose_lib::BundleOptions &getMutableOptions() {
-            return bundle_options;
-        }
-
-        const pose_lib::BundleOptions &getOptions() const {
-            return bundle_options;
-        }
 
         // The minimum number of points required for the estimation
         static constexpr size_t sampleSize() {
             return 6;
+        }
+
+        // Determines if there is a chance of returning multiple models
+        // the function 'estimateModel' is applied.
+        static constexpr bool returnMultipleModels() {
+            return maximumSolutions() > 1;
         }
 
         // The maximum number of solutions returned by the solver
@@ -72,7 +69,7 @@ namespace estimator::solver {
         // If there is no initial model provided estimate one
         std::vector<Model> temp_models;
         if (models_.size() == 0) {
-            // If we are given enough points use the eight-point solver since that is fast and accurate enough for initializing the BA.
+            // If we are given enough points use the eight-point mvg_solver/ since that is fast and accurate enough for initializing the BA.
             if (sample_number_ >= 8) {
                 FundamentalMatrixEightPointSolver eight_point_solver;
                 eight_point_solver.estimateModel(data_, // All point correspondences
@@ -81,9 +78,9 @@ namespace estimator::solver {
                                                  temp_models, // The estimated model parameters
                                                  weights_); // The weights used for the estimation
             }
-                // Otherwise, use the five-point solver.
+                // Otherwise, use the five-point mvg_solver/.
             else {
-                estimator::solver::EssentialMatrixFivePointSteweniusSolver five_point_solver;
+                solver::EssentialMatrixFivePointSolverStewenius five_point_solver;
                 five_point_solver.estimateModel(data_, // All point correspondences
                                                 sample_, // The sample, i.e., indices of points to be used
                                                 sample_number_, // The size of the sample
@@ -101,7 +98,7 @@ namespace estimator::solver {
         pt2 << data_.at<double>(point_idx, 2), data_.at<double>(point_idx, 3), 1;
 
         // Iterating through the possible models.
-        // This is 1 if the eight-point solver is used.
+        // This is 1 if the eight-point mvg_solver/ is used.
         // Otherwise, it is up to 3.
         for (auto &model: temp_models) {
             // Decompose the essential matrix to camera poses

@@ -29,16 +29,13 @@ int main(int argc, char **argv) {
     google::InitGoogleLogging(argv[0]);
 
     const double ransac_confidence = 0.90; // The required confidence in the results
-    const double maximum_threshold = 5; // The maximum sigma value allowed in MAGSAC
+    const double maximum_threshold = 10; // The maximum sigma value allowed in MAGSAC
 
     // Apply MAGSAC with a reasonably set maximum threshold
     LOG(INFO) << "Running MAGSAC with Three Point Solver";
     testEssentialMatrixFitting(ransac_confidence, maximum_threshold, false, false);
-    cv::waitKey(0);
-
-//    // Apply MAGSAC with a reasonably set maximum threshold
-//    LOG(INFO) << "Running MAGSAC with Five Point Solver";
-//    testEssentialMatrixFitting(ransac_confidence, 2.0, false, true);
+    LOG(INFO) << "Running MAGSAC++ with Three Point Solver";
+    testEssentialMatrixFitting(ransac_confidence, maximum_threshold, true, false);
 
     return 0;
 }
@@ -57,11 +54,11 @@ void testEssentialMatrixFitting(
     sampler::UniformSampler main_sampler(&norm_points);
 
     // The robust essential matrix estimator class containing the function for the fitting and residual calculation
-//    estimator::DefaultEssentialMatrixEstimator estimator(intrinsics_src, intrinsics_dst, 0.0);
-//    MAGSAC<estimator::DefaultEssentialMatrixEstimator> magsac(use_magsac_plus_plus_ ? "MAGSAC_PLUS_PLUS" : "MAGSAC_ORIGINAL");
+    estimator::DefaultEssentialMatrixEstimator estimator(intrinsics_src, intrinsics_dst, 0.0);
+    MAGSAC<estimator::DefaultEssentialMatrixEstimator> magsac(use_magsac_plus_plus_ ? "MAGSAC_PLUS_PLUS" : "MAGSAC_ORIGINAL");
 
-    estimator::TestEssentialMatrixEstimator estimator(intrinsics_src, intrinsics_dst, 0.0);
-    MAGSAC<estimator::TestEssentialMatrixEstimator> magsac(use_magsac_plus_plus_ ? "MAGSAC_PLUS_PLUS" : "MAGSAC_ORIGINAL");
+//    estimator::TestEssentialMatrixEstimator estimator(intrinsics_src, intrinsics_dst, 0.0);
+//    MAGSAC<estimator::TestEssentialMatrixEstimator> magsac(use_magsac_plus_plus_ ? "MAGSAC_PLUS_PLUS" : "MAGSAC_ORIGINAL");
 
     // Normalize the threshold by the average of the focal lengths
     const double normalizing_multiplier = 1.0 / ((intrinsics_src(0, 0) + intrinsics_src(1, 1) +
@@ -87,7 +84,7 @@ void testEssentialMatrixFitting(
 
     std::chrono::duration<double> elapsed_seconds = end - start;
 
-    LOG(INFO) << "Actual number of iterations drawn by MAGSAC at " << ransac_confidence_ << " confidence = " << iteration_number;
+    LOG(INFO) << "Actual number of iterations at " << ransac_confidence_ << " confidence = " << iteration_number;
     LOG(INFO) << "Elapsed time = " << elapsed_seconds.count() << " seconds";
 
     // Visualization part.

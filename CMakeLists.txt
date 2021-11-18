@@ -102,48 +102,35 @@ if (USE_OPENMP)
     set(TRGT_LNK_LBS_ADDITIONAL OpenMP::OpenMP_CXX)
 endif (USE_OPENMP)
 
+
+SET(SOURCE_DIR "include/")
+
+
 # ==============================================================================
 # Includes
 # ==============================================================================
-SET(SOURCE_DIR "magsac")
 
-include_directories(
-        ${PROJECT_SOURCE_DIR}/graph-cut-ransac/src/pygcransac/include
-)
-
-
-# ==============================================================================
-# Structure: MAGSAC Library
-# ==============================================================================
-
-# Tell cmake that headers are in alse in source_dir
-include_directories(${SOURCE_DIR}/include)
+include_directories(${SOURCE_DIR})
 
 # Set header files for the library
-file(GLOB_RECURSE HDRS_MAGSAC
-        "${SOURCE_DIR}/include/*.h"
-        )
+file(GLOB_RECURSE HDRS_MAGSAC "${SOURCE_DIR}/*.h*")
 
 # Set source files to be added to the library
-file(GLOB_RECURSE SRCS_MAGSAC
-        "${SOURCE_DIR}/include/*.cpp"
+file(GLOB_RECURSE SRCS_MAGSAC "${SOURCE_DIR}/*.c*")
+
+add_library(${PROJECT_NAME} STATIC
+        ${HDRS_MAGSAC}
+        ${SRCS_MAGSAC}
         )
 
-add_library(
-        ${PROJECT_NAME} STATIC
-        ${HDRS_MAGSAC}
-        ${SRCS_MAGSAC})
-
-target_link_libraries(
-        ${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}
         ${OpenCV_LIBS}
         Eigen3::Eigen
         glog::glog
         gflags)
 
-#add_executable(SampleProject cpp_example.cpp)
 add_executable(SampleProject test_example.cpp utils.cpp utils.h)
-target_link_libraries(SampleProject PUBLIC
+target_link_libraries(SampleProject
         ${PROJECT_NAME}
         ${OpenCV_LIBS}
         Eigen3::Eigen

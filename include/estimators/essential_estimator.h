@@ -3,9 +3,9 @@
 #include <Eigen/Eigen>
 #include "model.h"
 #include "estimator.h"
-#include "estimators/solver/solver_essential_matrix_five_point_stewenius.h"
-#include "estimators/solver/solver_essential_matrix_bundle_adjustment.h"
-#include "estimators/solver/solver_essential_matrix_three_point_sweeny.h"
+#include "mvg_solver/solver_essential_matrix_five_point_stewenius.hpp"
+#include "mvg_solver/solver_essential_matrix_bundle_adjustment.hpp"
+#include "mvg_solver/solver_essential_matrix_three_point_sweeny.hpp"
 
 namespace estimator {
     // This is the estimator class for estimating an essential matrix between two images.
@@ -46,7 +46,7 @@ namespace estimator {
         {
             constexpr size_t sample_size = sampleSize(); // The size of a minimal sample
 
-            // Estimating the model_ parameters by the solver engine
+            // Estimating the model_ parameters by the mvg_solver/ engine
             if (!minimal_solver->estimateModel(data, sample, sample_size, *models)) {
                 LOG(ERROR) << "NO Estimated Model";
                 return false;
@@ -74,7 +74,7 @@ namespace estimator {
             }
 
             // Number of points used for selecting the best model out of the estimated ones.
-            // In case the solver return a single model, 0 points are not used for the estimation.
+            // In case the mvg_solver/ return a single model, 0 points are not used for the estimation.
             size_t points_not_used = 0;
             if constexpr (NonMinimalSolverEngine::returnMultipleModels()) {
                 points_not_used =
@@ -393,8 +393,8 @@ namespace estimator {
         }
     };
 
-    typedef EssentialMatrixEstimator<solver::EssentialMatrixFivePointSteweniusSolver, solver::EssentialMatrixBundleAdjustmentSolver>
+    typedef EssentialMatrixEstimator<solver::EssentialMatrixFivePointSolverStewenius, solver::EssentialMatrixBundleAdjustmentSolver>
             DefaultEssentialMatrixEstimator;
-    typedef EssentialMatrixEstimator<solver::EssentialMatrixThreePointSweenySolver, solver::EssentialMatrixBundleAdjustmentSolver>
+    typedef EssentialMatrixEstimator<solver::EssentialMatrixThreePointSolverSweeny, solver::EssentialMatrixBundleAdjustmentSolver>
             TestEssentialMatrixEstimator;
 }

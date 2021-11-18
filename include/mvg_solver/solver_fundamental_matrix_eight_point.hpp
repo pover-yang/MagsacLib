@@ -1,10 +1,9 @@
 #pragma once
 
-#include "solver_engine.h"
 
-namespace estimator::solver {
+namespace solver {
     // This is the estimator class for estimating a homography matrix between two images. A model estimation method and error calculation method are implemented
-    class FundamentalMatrixEightPointSolver : public SolverEngine {
+    class FundamentalMatrixEightPointSolver {
     public:
         FundamentalMatrixEightPointSolver() {
         }

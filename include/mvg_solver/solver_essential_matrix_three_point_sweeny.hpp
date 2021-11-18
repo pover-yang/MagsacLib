@@ -4,22 +4,20 @@
 #include <vector>
 #include <Eigen/Dense>
 
-#include "solver_engine.h"
 
-
-namespace estimator::solver {
-    class EssentialMatrixThreePointSweenySolver : public SolverEngine {
+namespace solver {
+    class EssentialMatrixThreePointSolverSweeny {
     public:
-        EssentialMatrixThreePointSweenySolver() = default;
+        EssentialMatrixThreePointSolverSweeny() = default;
 
-        ~EssentialMatrixThreePointSweenySolver() = default;
+        ~EssentialMatrixThreePointSolverSweeny() = default;
 
         static constexpr size_t sampleSize() {
             return 3;
         }
 
         static constexpr size_t maximumSolutions() {
-            return 6;
+            return 4;
         }
 
         static constexpr bool returnMultipleModels() {
@@ -35,11 +33,8 @@ namespace estimator::solver {
     protected:
         static void essential_from_motion(const Eigen::Matrix3d &R, const Eigen::Vector3d &t, Eigen::Matrix3d *E);
 
-        static int qep_div_1_q2(const Eigen::Matrix3d &A,
-                                const Eigen::Matrix3d &B,
-                                const Eigen::Matrix3d &C,
-                                double eig_vals[4],
-                                Eigen::Matrix<double, 3, 4> *eig_vecs);
+        static int qep_div_1_q2(const Eigen::Matrix3d &A, const Eigen::Matrix3d &B, const Eigen::Matrix3d &C,
+                                double eig_vals[4], Eigen::Matrix<double, 3, 4> *eig_vecs);
 
         static int solve_quartic_real(double b, double c, double d, double e, double roots[4]);
 
@@ -50,7 +45,7 @@ namespace estimator::solver {
         static double sign(double z);
     };
 
-    inline bool EssentialMatrixThreePointSweenySolver::estimateModel(
+    inline bool EssentialMatrixThreePointSolverSweeny::estimateModel(
             const cv::Mat &data,
             const size_t *sample,
             size_t sample_number,
@@ -70,8 +65,10 @@ namespace estimator::solver {
             y1 = data_ptr[offset + 1];
             x2 = data_ptr[offset + 2];
             y2 = data_ptr[offset + 3];
-            const Eigen::Vector3d p1(x1, y1, 1);
-            const Eigen::Vector3d p2(x2, y2, 1);
+            const Eigen::Vector3d p1(x1, y1,
+                                     1);
+            const Eigen::Vector3d p2(x2, y2,
+                                     1);
 
             M.row(i) = p2.cross(p1);
             C.row(i) = 2.0 * p2.cross(axis.cross(p1));
@@ -111,7 +108,7 @@ namespace estimator::solver {
     };
 
     inline void
-    EssentialMatrixThreePointSweenySolver::essential_from_motion(const Eigen::Matrix3d &R, const Eigen::Vector3d &t, Eigen::Matrix3d *E) {
+    EssentialMatrixThreePointSolverSweeny::essential_from_motion(const Eigen::Matrix3d &R, const Eigen::Vector3d &t, Eigen::Matrix3d *E) {
         *E <<
            0.0, -t(2), t(1),
                 t(2), 0.0, -t(0),
@@ -119,11 +116,9 @@ namespace estimator::solver {
         *E = (*E) * R;
     }
 
-    inline int EssentialMatrixThreePointSweenySolver::qep_div_1_q2(const Eigen::Matrix<double, 3, 3> &A,
-                                                                   const Eigen::Matrix<double, 3, 3> &B,
-                                                                   const Eigen::Matrix<double, 3, 3> &C,
-                                                                   double eig_vals[4],
-                                                                   Eigen::Matrix<double, 3, 4> *eig_vecs) {
+    inline int
+    EssentialMatrixThreePointSolverSweeny::qep_div_1_q2(const Eigen::Matrix3d &A, const Eigen::Matrix3d &B, const Eigen::Matrix3d &C,
+                                                        double eig_vals[4], Eigen::Matrix<double, 3, 4> *eig_vecs) {
 
         double coeffs[7];
 
@@ -152,7 +147,7 @@ namespace estimator::solver {
         return n_roots;
     }
 
-    inline int EssentialMatrixThreePointSweenySolver::solve_quartic_real(double b, double c, double d, double e, double roots[4]) {
+    inline int EssentialMatrixThreePointSolverSweeny::solve_quartic_real(double b, double c, double d, double e, double roots[4]) {
 
         // Find depressed quartic
         double p = c - 3.0 * b * b / 8.0;
@@ -206,7 +201,7 @@ namespace estimator::solver {
         return sols;
     }
 
-    inline void EssentialMatrixThreePointSweenySolver::solve_cubic_single_real(double c2, double c1, double c0, double &root) {
+    inline void EssentialMatrixThreePointSolverSweeny::solve_cubic_single_real(double c2, double c1, double c0, double &root) {
         double a = c1 - c2 * c2 / 3.0;
         double b = (2.0 * c2 * c2 * c2 - 9.0 * c2 * c1) / 27.0 + c0;
         double c = b * b / 4.0 + a * a * a / 27.0;
@@ -220,7 +215,7 @@ namespace estimator::solver {
         }
     }
 
-    inline void EssentialMatrixThreePointSweenySolver::detpoly3(const Eigen::Matrix<double, 3, 3> &A, const Eigen::Matrix<double, 3, 3> &B,
+    inline void EssentialMatrixThreePointSolverSweeny::detpoly3(const Eigen::Matrix<double, 3, 3> &A, const Eigen::Matrix<double, 3, 3> &B,
                                                                 double coeffs[7]) {
         coeffs[0] = B(0, 0) * B(1, 1) * B(2, 2) - B(0, 0) * B(1, 2) * B(2, 1) - B(0, 1) * B(1, 0) * B(2, 2) +
                     B(0, 1) * B(1, 2) * B(2, 0) + B(0, 2) * B(1, 0) * B(2, 1) - B(0, 2) * B(1, 1) * B(2, 0);
@@ -251,7 +246,7 @@ namespace estimator::solver {
         coeffs[6] = 1.0;
     }
 
-    inline double EssentialMatrixThreePointSweenySolver::sign(const double z) {
+    inline double EssentialMatrixThreePointSolverSweeny::sign(const double z) {
         return z < 0 ? -1.0 : 1.0;
     }
 }

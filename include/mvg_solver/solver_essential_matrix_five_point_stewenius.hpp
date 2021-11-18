@@ -1,14 +1,13 @@
 #pragma once
 
-#include "solver_engine.h"
 
-namespace estimator::solver {
-    // This is the estimator class for estimating a homography matrix between two images. A model estimation method and error calculation method are implemented
-    class EssentialMatrixFivePointSteweniusSolver : public SolverEngine {
+namespace solver {
+    // This is the estimator class for estimating a homography matrix between two images.
+    class EssentialMatrixFivePointSolverStewenius {
     public:
-        EssentialMatrixFivePointSteweniusSolver() = default;
+        EssentialMatrixFivePointSolverStewenius() = default;
 
-        ~EssentialMatrixFivePointSteweniusSolver() = default;
+        ~EssentialMatrixFivePointSolverStewenius() = default;
 
 
         static constexpr size_t sampleSize() {
@@ -53,7 +52,7 @@ namespace estimator::solver {
                 const Eigen::Matrix<double, 1, 4> nullSpace[3][3]) const;
     };
 
-    inline bool EssentialMatrixFivePointSteweniusSolver::estimateModel(
+    inline bool EssentialMatrixFivePointSolverStewenius::estimateModel(
             const cv::Mat &data_,
             const size_t *sample_,
             size_t sample_number_,
@@ -172,7 +171,7 @@ namespace estimator::solver {
     // Multiply two degree one polynomials of variables x, y, z.
     // E.g. p1 = a[0]x + a[1]y + a[2]z + a[3]
     // Output order: x^2 xy y^2 xz yz z^2 x y z 1 (GrevLex)
-    inline Eigen::Matrix<double, 1, 10> EssentialMatrixFivePointSteweniusSolver::multiplyDegOnePoly(
+    inline Eigen::Matrix<double, 1, 10> EssentialMatrixFivePointSolverStewenius::multiplyDegOnePoly(
             const Eigen::RowVector4d &a,
             const Eigen::RowVector4d &b) const {
         Eigen::Matrix<double, 1, 10> output;
@@ -201,7 +200,7 @@ namespace estimator::solver {
 
     // Multiply a 2 deg poly (in x, y, z) and a one deg poly in GrevLex order.
     // x^3 x^2y xy^2 y^3 x^2z xyz y^2z xz^2 yz^2 z^3 x^2 xy y^2 xz yz z^2 x y z 1
-    inline Eigen::Matrix<double, 1, 20> EssentialMatrixFivePointSteweniusSolver::multiplyDegTwoDegOnePoly(
+    inline Eigen::Matrix<double, 1, 20> EssentialMatrixFivePointSolverStewenius::multiplyDegTwoDegOnePoly(
             const Eigen::Matrix<double, 1, 10> &a,
             const Eigen::RowVector4d &b) const {
         Eigen::Matrix<double, 1, 20> output;
@@ -248,7 +247,7 @@ namespace estimator::solver {
         return output;
     }
 
-    inline Eigen::Matrix<double, 1, 20> EssentialMatrixFivePointSteweniusSolver::getDeterminantConstraint(
+    inline Eigen::Matrix<double, 1, 20> EssentialMatrixFivePointSolverStewenius::getDeterminantConstraint(
             const Eigen::Matrix<double, 1, 4> nullSpace[3][3]) const {
         // Singularity constraint.
         return multiplyDegTwoDegOnePoly(
@@ -266,17 +265,15 @@ namespace estimator::solver {
     }
 
     // Shorthand for multiplying the Essential matrix with its transpose.
-    inline Eigen::Matrix<double, 1, 10> EssentialMatrixFivePointSteweniusSolver::computeEETranspose(
-            const Eigen::Matrix<double, 1, 4> nullSpace[3][3],
-            int i,
-            int j) const {
+    inline Eigen::Matrix<double, 1, 10> EssentialMatrixFivePointSolverStewenius::computeEETranspose(
+            const Eigen::Matrix<double, 1, 4> nullSpace[3][3], int i, int j) const {
         return multiplyDegOnePoly(nullSpace[i][0], nullSpace[j][0]) +
                multiplyDegOnePoly(nullSpace[i][1], nullSpace[j][1]) +
                multiplyDegOnePoly(nullSpace[i][2], nullSpace[j][2]);
     }
 
     // Builds the trace constraint: EEtE - 1/2 trace(EEt)E = 0
-    inline Eigen::Matrix<double, 9, 20> EssentialMatrixFivePointSteweniusSolver::getTraceConstraint(
+    inline Eigen::Matrix<double, 9, 20> EssentialMatrixFivePointSolverStewenius::getTraceConstraint(
             const Eigen::Matrix<double, 1, 4> nullSpace[3][3]) const {
         Eigen::Matrix<double, 9, 20> traceConstraint;
 
@@ -304,7 +301,7 @@ namespace estimator::solver {
         return traceConstraint;
     }
 
-    inline Eigen::Matrix<double, 10, 20> EssentialMatrixFivePointSteweniusSolver::buildConstraintMatrix(
+    inline Eigen::Matrix<double, 10, 20> EssentialMatrixFivePointSolverStewenius::buildConstraintMatrix(
             const Eigen::Matrix<double, 1, 4> nullSpace[3][3]) const {
         Eigen::Matrix<double, 10, 20> constraintMatrix;
         constraintMatrix.block<9, 20>(0, 0) = getTraceConstraint(nullSpace);
